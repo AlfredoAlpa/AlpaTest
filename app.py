@@ -74,7 +74,7 @@ def genera_report_pdf():
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
     # CORREZIONE 1: Larghezza portata a 190mm (100% dell'area utile)
-    larghezza_utile = 190 
+    larghezza_utile = 100 
     
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
@@ -234,4 +234,5 @@ if n3.button("Successivo ⏭️", use_container_width=True):
         if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
             st.session_state.indice += 1
             st.rerun()
+
 
