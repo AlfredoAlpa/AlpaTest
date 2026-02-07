@@ -1,89 +1,234 @@
 import streamlit as st
 import pandas as pd
-from fpdf import FPDF
 import os
+import time
+from fpdf import FPDF
 
-# 1. CONFIGURAZIONE PAGINA
-st.set_page_config(page_title="AlPaTest - Quiz Online", layout="wide")
+# Configurazione pagina
+st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# Funzione per gestire le immagini in modo sicuro
-def mostra_immagine(nome_file):
-    percorso = os.path.join("immagini", nome_file)
-    if os.path.exists(percorso):
-        st.image(percorso, width=600)
-    else:
-        st.warning(f"⚠️ Immagine '{nome_file}' non trovata nella cartella 'immagini'.")
-
-# --- 2. LOGIN ---
+# --- LOGIN (Aggiunto per sicurezza Online) ---
 if 'autenticato' not in st.session_state:
-    st.session_state['autenticato'] = False
+    st.session_state.autenticato = False
 
-if not st.session_state['autenticato']:
+if not st.session_state.autenticato:
     st.title("🔐 Accesso AlPaTest")
-    # Il codice viene convertito in minuscolo per evitare errori di maiuscole
-    codice_input = st.text_input("Inserisci codice (Open o Studente01):", type="password").strip().lower()
-    
-    if st.button("Accedi"):
-        if codice_input in ["open", "studente01"]:
-            st.session_state['autenticato'] = True
+    codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
+    if st.button("Entra"):
+        if codice.lower() in ["open", "studente01"]:
+            st.session_state.autenticato = True
             st.rerun()
         else:
-            st.error("Codice errato. Riprova.")
+            st.error("Codice errato")
     st.stop()
 
-# --- 3. QUIZ (Appare solo dopo il Login) ---
-st.title("📝 AlPaTest - Sessione Quiz")
-st.write("Rispondi a tutte le domande e clicca sul tasto in fondo per il report.")
+# --- CSS ---
+st.markdown("""
+    <style>
+    .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
+    .logo-style { font-family: 'Georgia', serif; font-size: 3rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
+    .quesito-style { color: #FFEB3B !important; font-size: 2.2rem !important; font-weight: bold !important; line-height: 1.3; }
+    .stRadio label p { font-size: 1.8rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
+    div[data-testid="stRadio"] > div { align-items: flex-start !important; color: white !important; }
+    .timer-style { font-size: 2.5rem; font-weight: bold; text-align: right; }
+    .stButton>button { height: 50px !important; font-weight: bold !important; }
+    .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Dizionario per salvare le risposte
-risposte_utente = {}
+# --- INIZIALIZZAZIONE ---
+if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
+if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
+if 'indice' not in st.session_state: st.session_state.indice = 0
+if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
+if 'start_time' not in st.session_state: st.session_state.start_time = None
+if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
 
-# --- ESEMPIO DOMANDA 15 (Con immagine) ---
-st.markdown("---")
-st.subheader("Domanda n. 15")
-st.write("Analizza l'immagine e seleziona l'opzione corretta:")
-mostra_immagine("q15.jpg")
-risposte_utente["Domanda 15"] = st.radio("Tua risposta:", ["A", "B", "C", "D"], key="q15")
+# --- FUNZIONI ---
+def pulisci_testo(testo):
+    if pd.isna(testo) or testo == "": return " "
+    repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
+    t = str(testo)
+    for k,v in repls.items(): t = t.replace(k,v)
+    return t.encode('latin-1','replace').decode('latin-1')
 
-# --- ESEMPIO ALTRE DOMANDE (Puoi duplicare questo blocco) ---
-st.markdown("---")
-st.subheader("Domanda n. 16")
-st.write("Qual è il valore della variabile X nel grafico?")
-# mostra_immagine("q16.jpg") # Decommenta se hai l'immagine
-risposte_utente["Domanda 16"] = st.radio("Tua risposta:", ["A", "B", "C", "D"], key="q16")
-
-
-# --- 4. GENERAZIONE REPORT PDF (Larghezza 100%) ---
-st.markdown("---")
-if st.button("🏁 Termina Quiz e Genera Report"):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
+def calcola_risultati():
+    esatte = 0
+    errate = 0
+    non_date = 0
+    for i, row in st.session_state.df_filtrato.iterrows():
+        r_u = st.session_state.risposte_date.get(i)
+        r_e = str(row['Corretta']).strip()
+        if r_u is None: non_date += 1
+        elif r_u == r_e: esatte += 1
+        else: errate += 1
     
-    # Titolo
-    pdf.cell(190, 10, "Report Risultati AlPaTest", ln=True, align='C')
+    punti = (esatte * st.session_state.punteggi["Corretta"]) + \
+            (non_date * st.session_state.punteggi["Non Data"]) + \
+            (errate * st.session_state.punteggi["Errata"])
+    return esatte, errate, non_date, round(punti, 2)
+
+def genera_report_pdf():
+    esatte, errate, non_date, punti_tot = calcola_risultati()
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.add_page()
+    # CORREZIONE 1: Larghezza portata a 190mm (100% dell'area utile)
+    larghezza_utile = 190 
+    
+    pdf.set_font("helvetica", 'B', 16)
+    pdf.cell(larghezza_utile, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
+    pdf.ln(5)
+    
+    pdf.set_font("helvetica", 'B', 12)
+    pdf.cell(larghezza_utile, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
+    pdf.set_font("helvetica", '', 10)
+    pdf.cell(larghezza_utile, 6, pulisci_testo(f"Esatte: {esatte} | Errate: {errate} | Non date: {non_date}"), ln=True, align='C')
     pdf.ln(10)
     
-    pdf.set_font("Arial", '', 12)
-    # Intestazione Tabella
-    pdf.set_fill_color(230, 230, 230)
-    pdf.cell(95, 10, "Domanda", border=1, fill=True)
-    pdf.cell(95, 10, "Risposta Data", border=1, fill=True, ln=True)
-    
-    # Ciclo per inserire tutte le risposte date
-    for domanda, risp in risposte_utente.items():
-        pdf.cell(95, 10, domanda, border=1)
-        pdf.cell(95, 10, risp, border=1, ln=True)
-    
-    # Salvataggio
-    pdf_file = "Report_AlPaTest.pdf"
-    pdf.output(pdf_file)
-    
-    with open(pdf_file, "rb") as f:
-        st.download_button(
-            label="📥 Scarica Report PDF",
-            data=f,
-            file_name="Risultati_Quiz.pdf",
-            mime="application/pdf"
-        )
-    st.balloons()
+    for i, row in st.session_state.df_filtrato.iterrows():
+        r_u = st.session_state.risposte_date.get(i, "N.D.")
+        r_e = str(row['Corretta']).strip()
+        pdf.set_font("helvetica", 'B', 11)
+        pdf.multi_cell(larghezza_utile, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
+        pdf.set_font("helvetica", '', 11)
+        pdf.multi_cell(larghezza_utile, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
+        pdf.ln(2)
+        pdf.line(pdf.get_x(), pdf.get_y(), pdf.get_x() + larghezza_utile, pdf.get_y())
+        pdf.ln(5) 
+    return bytes(pdf.output())
+
+def importa_quesiti():
+    try:
+        df = pd.read_excel("quiz.xlsx", sheet_name=0)
+        df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
+        
+        try:
+            df_p = pd.read_excel("quiz.xlsx", sheet_name="Punteggi")
+            st.session_state.punteggi["Corretta"] = float(df_p.iloc[0, 0])
+            st.session_state.punteggi["Non Data"] = float(df_p.iloc[0, 1])
+            st.session_state.punteggi["Errata"] = float(df_p.iloc[0, 2])
+        except:
+            st.warning("Foglio 'Punteggi' non trovato. Uso valori predefiniti.")
+
+        frames = []
+        for i in range(10):
+            d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
+            if d.isdigit() and a.isdigit():
+                frames.append(df.iloc[int(d)-1 : int(a)])
+        if frames:
+            st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
+            st.session_state.indice = 0
+            st.session_state.risposte_date = {}
+            st.session_state.start_time = time.time()
+    except Exception as e:
+        st.error(f"Errore caricamento Excel: {e}")
+
+@st.fragment(run_every=1)
+def mostra_timer():
+    if st.session_state.start_time and st.session_state.get("simulazione", False):
+        rimanente = max(0, (30 * 60) - (time.time() - st.session_state.start_time))
+        minuti, secondi = int(rimanente // 60), int(rimanente % 60)
+        colore = "#00FF00" if rimanente > 300 else "#FF0000"
+        st.markdown(f'<p class="timer-style" style="color:{colore}">⏱️ {minuti:02d}:{secondi:02d}</p>', unsafe_allow_html=True)
+        if rimanente <= 0:
+            st.session_state.fase = "CONCLUSIONE"
+            st.rerun()
+
+# --- LOGICA NAVIGAZIONE ---
+if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
+    st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
+    if st.session_state.fase == "CONFERMA":
+        with st.container(border=True):
+            st.write("## ❓ Vuoi consegnare la prova?")
+            c1, c2 = st.columns(2)
+            if c1.button("Sì, CONSEGNA", use_container_width=True):
+                st.session_state.fase = "CONCLUSIONE"
+                st.rerun()
+            if c2.button("No, CONTINUA", use_container_width=True):
+                st.session_state.fase = "PROVA"
+                st.rerun()
+    else:
+        esatte, errate, non_date, punti_tot = calcola_risultati()
+        st.markdown(f"""
+            <div class="risultato-box">
+                <h2>✅ Esame completato!</h2>
+                <p style="font-size:1.5rem;">Punteggio Totale: <b>{punti_tot}</b></p>
+                <p>Risposte Esatte: {esatte} | Errate: {errate} | Non date: {non_date}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.download_button("📩 SCARICA REPORT E CHIUDI", 
+                           data=genera_report_pdf(), 
+                           file_name="esito_esame.pdf", 
+                           on_click=lambda: st.session_state.clear(), 
+                           use_container_width=True)
+    st.stop()
+
+# --- LAYOUT PRINCIPALE ---
+t1, t2 = st.columns([7, 3])
+with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
+with t2: mostra_timer()
+
+st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1)'>", unsafe_allow_html=True)
+
+col_sx, col_centro, col_dx = st.columns([2.8, 7, 3.2])
+
+with col_sx:
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Elenco domande</p>', unsafe_allow_html=True)
+    if not st.session_state.df_filtrato.empty:
+        with st.container(height=550, border=False):
+            lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
+            sel = st.radio("Lista", lista, index=st.session_state.indice, label_visibility="collapsed", key=f"nav_{st.session_state.indice}")
+            st.session_state.indice = lista.index(sel)
+
+with col_centro:
+    if not st.session_state.df_filtrato.empty:
+        q = st.session_state.df_filtrato.iloc[st.session_state.indice]
+        st.markdown(f'<div class="quesito-style">{st.session_state.indice + 1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
+        st.write("<br>", unsafe_allow_html=True)
+        
+        # CORREZIONE 2: Gestione immagini universale
+        if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
+            img_nome = str(q['Immagine']).strip()
+            percorso_img = os.path.join("immagini", img_nome)
+            if os.path.exists(percorso_img):
+                st.image(percorso_img, use_container_width=True)
+            else:
+                st.info(f"Immagine {img_nome} non trovata.")
+        
+        opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
+        ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
+        idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
+        
+        def salva_r(): 
+            st.session_state.risposte_date[st.session_state.indice] = st.session_state[f"r_{st.session_state.indice}"][0]
+
+        st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+    else: st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
+
+with col_dx:
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;">Selezione gruppi</p>', unsafe_allow_html=True)
+    st.checkbox("Modalità simulazione (30 min)", key="simulazione")
+    for i in range(10):
+        r1, r2 = st.columns(2)
+        r1.text_input("Dal", key=f"da_{i}", placeholder="Dal", label_visibility="collapsed")
+        r2.text_input("Al", key=f"a_{i}", placeholder="Al", label_visibility="collapsed")
+    st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
+# --- NAVIGAZIONE ---
+st.markdown("<br>", unsafe_allow_html=True)
+n1, n2, n3, _ = st.columns([1.5, 1.5, 1.5, 5.5])
+if n1.button("⏮️ Precedente", use_container_width=True):
+    if st.session_state.indice > 0:
+        st.session_state.indice -= 1
+        st.rerun()
+if n2.button("🏆 CONSEGNA", use_container_width=True):
+    if not st.session_state.df_filtrato.empty:
+        st.session_state.fase = "CONFERMA"
+        st.rerun()
+if n3.button("Successivo ⏭️", use_container_width=True):
+    if not st.session_state.df_filtrato.empty:
+        if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
+            st.session_state.indice += 1
+            st.rerun()
