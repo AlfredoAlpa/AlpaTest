@@ -202,7 +202,9 @@ with col_centro:
         idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
         def salva_r(): 
-            st.session_state.risposte_date[st.session_state.indice] = st.session_state[f"r_{st.session_state.indice}"][0]
+            chiave = f"r_{st.session_state.indice}"
+            if chiave in st.session_state and st.session_state[chiave]:
+                st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
 
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
     else: st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
@@ -232,3 +234,4 @@ if n3.button("Successivo ⏭️", use_container_width=True):
         if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
             st.session_state.indice += 1
             st.rerun()
+
