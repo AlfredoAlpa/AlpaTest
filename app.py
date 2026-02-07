@@ -3,83 +3,87 @@ import pandas as pd
 from fpdf import FPDF
 import os
 
-# 1. CONFIGURAZIONE PAGINA (Larghezza massima per evitare che il report esca fuori)
+# 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="AlPaTest - Quiz Online", layout="wide")
 
-# 2. FUNZIONE PER GESTIRE LE IMMAGINI
+# Funzione per gestire le immagini in modo sicuro
 def mostra_immagine(nome_file):
-    # Cerca l'immagine nella cartella 'immagini'
     percorso = os.path.join("immagini", nome_file)
     if os.path.exists(percorso):
-        st.image(percorso, width=500)
+        st.image(percorso, width=600)
     else:
-        st.info(f"Nota: L'immagine {nome_file} verrà visualizzata qui appena caricata nella cartella 'immagini'.")
+        st.warning(f"⚠️ Immagine '{nome_file}' non trovata nella cartella 'immagini'.")
 
-# --- 3. SISTEMA DI LOGIN ---
+# --- 2. LOGIN ---
 if 'autenticato' not in st.session_state:
     st.session_state['autenticato'] = False
 
 if not st.session_state['autenticato']:
     st.title("🔐 Accesso AlPaTest")
-    st.write("Inserisci uno dei codici autorizzati per iniziare il quiz.")
-    
-    # .strip() rimuove spazi vuoti digitati per errore
-    codice_inserito = st.text_input("Codice di accesso:", type="password").strip()
-    
-    # I TUOI CODICI DEFINITIVI
-    codici_validi = ["Open", "Studente01"]
+    # Il codice viene convertito in minuscolo per evitare errori di maiuscole
+    codice_input = st.text_input("Inserisci codice (Open o Studente01):", type="password").strip().lower()
     
     if st.button("Accedi"):
-        if codice_inserito in codici_validi:
+        if codice_input in ["open", "studente01"]:
             st.session_state['autenticato'] = True
             st.rerun()
         else:
-            st.error("Codice non valido. Riprova o contatta l'amministratore.")
+            st.error("Codice errato. Riprova.")
     st.stop()
 
-# --- 4. INTERFACCIA QUIZ (Dopo il Login) ---
-st.title("📝 AlPaTest - Sessione Quiz Concorso")
-st.success(f"Accesso effettuato con successo!")
+# --- 3. QUIZ (Appare solo dopo il Login) ---
+st.title("📝 AlPaTest - Sessione Quiz")
+st.write("Rispondi a tutte le domande e clicca sul tasto in fondo per il report.")
 
-# ESEMPIO DI DOMANDA CON IMMAGINE (Domanda 15)
+# Dizionario per salvare le risposte
+risposte_utente = {}
+
+# --- ESEMPIO DOMANDA 15 (Con immagine) ---
 st.markdown("---")
 st.subheader("Domanda n. 15")
-st.write("Analizza la figura sottostante e seleziona la risposta corretta:")
-
-# Richiamo l'immagine q15.jpg dalla cartella immagini
+st.write("Analizza l'immagine e seleziona l'opzione corretta:")
 mostra_immagine("q15.jpg")
+risposte_utente["Domanda 15"] = st.radio("Tua risposta:", ["A", "B", "C", "D"], key="q15")
 
-risposta_15 = st.radio("Scegli un'opzione:", ["Opzione A", "Opzione B", "Opzione C", "Opzione D"], key="q15")
-
-# --- 5. GENERAZIONE REPORT PDF (Larghezza utile 100%) ---
+# --- ESEMPIO ALTRE DOMANDE (Puoi duplicare questo blocco) ---
 st.markdown("---")
-if st.button("🏁 Concludi Quiz e Genera Report"):
+st.subheader("Domanda n. 16")
+st.write("Qual è il valore della variabile X nel grafico?")
+# mostra_immagine("q16.jpg") # Decommenta se hai l'immagine
+risposte_utente["Domanda 16"] = st.radio("Tua risposta:", ["A", "B", "C", "D"], key="q16")
+
+
+# --- 4. GENERAZIONE REPORT PDF (Larghezza 100%) ---
+st.markdown("---")
+if st.button("🏁 Termina Quiz e Genera Report"):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
     
-    # Titolo Report
-    pdf.cell(190, 10, "Report Finale AlPaTest", ln=True, align='C')
+    # Titolo
+    pdf.cell(190, 10, "Report Risultati AlPaTest", ln=True, align='C')
     pdf.ln(10)
     
     pdf.set_font("Arial", '', 12)
-    # Tabella con larghezza 190mm (il massimo per un foglio A4)
-    pdf.set_fill_color(200, 220, 255)
-    pdf.cell(95, 10, "Riferimento Domanda", border=1, fill=True)
+    # Intestazione Tabella
+    pdf.set_fill_color(230, 230, 230)
+    pdf.cell(95, 10, "Domanda", border=1, fill=True)
     pdf.cell(95, 10, "Risposta Data", border=1, fill=True, ln=True)
     
-    # Dati della risposta
-    pdf.cell(95, 10, "Domanda n. 15", border=1)
-    pdf.cell(95, 10, str(risposta_15), border=1, ln=True)
+    # Ciclo per inserire tutte le risposte date
+    for domanda, risp in risposte_utente.items():
+        pdf.cell(95, 10, domanda, border=1)
+        pdf.cell(95, 10, risp, border=1, ln=True)
     
-    # Salvataggio e Download
+    # Salvataggio
     pdf_file = "Report_AlPaTest.pdf"
     pdf.output(pdf_file)
     
     with open(pdf_file, "rb") as f:
         st.download_button(
-            label="📥 Scarica il tuo Report (PDF)",
+            label="📥 Scarica Report PDF",
             data=f,
-            file_name="Risultati_AlPaTest.pdf",
+            file_name="Risultati_Quiz.pdf",
             mime="application/pdf"
         )
+    st.balloons()
