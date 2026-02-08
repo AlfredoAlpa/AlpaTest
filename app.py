@@ -233,8 +233,22 @@ with col_centro:
                 st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
 
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
-    else: st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
-
+        st.write("---")
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c1:
+            if st.button("⬅️ Prec.", use_container_width=True, key="btn_prec"):
+                if st.session_state.indice > 0:
+                    st.session_state.indice -= 1
+                    st.rerun()
+        with c2:
+            if st.button("🏁 FINE", use_container_width=True, key="btn_fine"):
+                st.session_state.finito = True
+                st.rerun()
+        with c3:
+            if st.button("Succ. ➡️", use_container_width=True, key="btn_succ"):
+                if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
+                    st.session_state.indice += 1
+                    st.rerun()
 with col_dx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;">Selezione gruppi</p>', unsafe_allow_html=True)
     st.checkbox("Modalità simulazione (30 min)", key="simulazione")
@@ -244,22 +258,6 @@ with col_dx:
         r2.text_input("Al", key=f"a_{i}", placeholder="Al", label_visibility="collapsed")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
 
-# --- NAVIGAZIONE ---
-st.markdown("<br>", unsafe_allow_html=True)
-n1, n2, n3, _ = st.columns([1.5, 1.5, 1.5, 5.5])
-if n1.button("⏮️ Precedente", use_container_width=True):
-    if st.session_state.indice > 0:
-        st.session_state.indice -= 1
-        st.rerun()
-if n2.button("🏆 CONSEGNA", use_container_width=True):
-    if not st.session_state.df_filtrato.empty:
-        st.session_state.fase = "CONFERMA"
-        st.rerun()
-if n3.button("Successivo ⏭️", use_container_width=True):
-    if not st.session_state.df_filtrato.empty:
-        if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
-            st.session_state.indice += 1
-            st.rerun()
 
 
 
