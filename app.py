@@ -54,6 +54,8 @@ st.markdown("""
     
     /* Riduce lo spazio della linea orizzontale */
     hr { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
+    /* Rimpicciolisce il testo dei messaggi di avviso/info */
+    .stAlert p { font-size: 0.9rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -258,6 +260,7 @@ if n3.button("Successivo ⏭️", use_container_width=True):
         if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
             st.session_state.indice += 1
             st.rerun()
+
 
 
 
