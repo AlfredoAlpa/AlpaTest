@@ -194,9 +194,9 @@ with col_centro:
             percorso_img = os.path.join("immagini", img_nome)
             if os.path.exists(percorso_img):
             # Crea tre colonne: la foto starà in quella centrale (più larga)
-            sx, centro, dx = st.columns([1, 4, 1]) 
-            with centro:
-                st.image(percorso_img, use_container_width=True)
+                sx, centro, dx = st.columns([1, 4, 1]) 
+                with centro:
+                    st.image(percorso_img, use_container_width=True)
             else:
                 st.info(f"Immagine {img_nome} non trovata.")
         
@@ -237,6 +237,7 @@ if n3.button("Successivo ⏭️", use_container_width=True):
         if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
             st.session_state.indice += 1
             st.rerun()
+
 
 
 
