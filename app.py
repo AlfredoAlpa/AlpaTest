@@ -7,7 +7,7 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN (Aggiunto per sicurezza Online) ---
+# --- LOGIN ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
@@ -25,13 +25,8 @@ if not st.session_state.autenticato:
 # --- CSS ---
 st.markdown("""
     <style>
-    /* Sfondo e Contenitore principale */
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
-    
-    /* Riduce lo spazio bianco in cima alla pagina */
     .block-container { padding-top: 4rem !important; padding-bottom: 0rem !important; }
-
-    /* Titolo AlPaTest compatto */
     .logo-style { 
         font-family: 'Georgia', serif; 
         font-size: 3rem; 
@@ -41,20 +36,13 @@ st.markdown("""
         line-height: 1.0; 
         margin-bottom: -10px; 
     }
-
-    /* Stile Quesito e Risposte (mantenendo le tue misure) */
     .quesito-style { color: #FFEB3B !important; font-size: 1.5rem !important; font-weight: bold !important; line-height: 1.2; }
     .stRadio label p { font-size: 1.2rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
-    
-    /* Altri elementi */
     div[data-testid="stRadio"] > div { align-items: flex-start !important; color: white !important; }
     .timer-style { font-size: 2.5rem; font-weight: bold; text-align: right; }
     .stButton>button { height: 50px !important; font-weight: bold !important; }
     .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; }
-    
-    /* Riduce lo spazio della linea orizzontale */
     hr { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
-    /* Rimpicciolisce il testo dei messaggi di avviso/info */
     .stAlert p { font-size: 0.9rem !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -85,10 +73,7 @@ def calcola_risultati():
         if r_u is None: non_date += 1
         elif r_u == r_e: esatte += 1
         else: errate += 1
-    
-    punti = (esatte * st.session_state.punteggi["Corretta"]) + \
-            (non_date * st.session_state.punteggi["Non Data"]) + \
-            (errate * st.session_state.punteggi["Errata"])
+    punti = (esatte * st.session_state.punteggi["Corretta"]) + (non_date * st.session_state.punteggi["Non Data"]) + (errate * st.session_state.punteggi["Errata"])
     return esatte, errate, non_date, round(punti, 2)
 
 def genera_report_pdf():
@@ -96,19 +81,15 @@ def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
-    # CORREZIONE 1: Larghezza portata a 190mm (100% dell'area utile)
-    larghezza_utile = 100 
-    
+    larghezza_utile = 190 
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
-    
     pdf.set_font("helvetica", 'B', 12)
     pdf.cell(larghezza_utile, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.set_font("helvetica", '', 10)
     pdf.cell(larghezza_utile, 6, pulisci_testo(f"Esatte: {esatte} | Errate: {errate} | Non date: {non_date}"), ln=True, align='C')
     pdf.ln(10)
-    
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
@@ -117,7 +98,7 @@ def genera_report_pdf():
         pdf.set_font("helvetica", '', 11)
         pdf.multi_cell(larghezza_utile, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
         pdf.ln(2)
-        pdf.line(pdf.get_x(), pdf.get_y(), pdf.get_x() + larghezza_utile, pdf.get_y())
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(5) 
     return bytes(pdf.output())
 
@@ -125,7 +106,6 @@ def importa_quesiti():
     try:
         df = pd.read_excel("quiz.xlsx", sheet_name=0)
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
-        
         try:
             df_p = pd.read_excel("quiz.xlsx", sheet_name="Punteggi")
             st.session_state.punteggi["Corretta"] = float(df_p.iloc[0, 0])
@@ -133,7 +113,6 @@ def importa_quesiti():
             st.session_state.punteggi["Errata"] = float(df_p.iloc[0, 2])
         except:
             st.warning("Foglio 'Punteggi' non trovato. Uso valori predefiniti.")
-
         frames = []
         for i in range(10):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
@@ -211,12 +190,10 @@ with col_centro:
         st.markdown(f'<div class="quesito-style">{st.session_state.indice + 1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
         st.write("<br>", unsafe_allow_html=True)
         
-        # CORREZIONE 2: Gestione immagini universale
         if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
             img_nome = str(q['Immagine']).strip()
             percorso_img = os.path.join("immagini", img_nome)
             if os.path.exists(percorso_img):
-            # Crea tre colonne: la foto starà in quella centrale (più larga)
                 sx, centro, dx = st.columns([1, 4, 1]) 
                 with centro:
                     st.image(percorso_img, use_container_width=True)
@@ -233,22 +210,24 @@ with col_centro:
                 st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
 
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+        
+        # --- PULSANTI SPOSTATI QUI ---
         st.write("---")
-        c1, c2, c3 = st.columns([1, 1, 1])
-        with c1:
-            if st.button("⬅️ Prec.", use_container_width=True, key="btn_prec"):
-                if st.session_state.indice > 0:
-                    st.session_state.indice -= 1
-                    st.rerun()
-        with c2:
-            if st.button("🏁 FINE", use_container_width=True, key="btn_fine"):
-                st.session_state.finito = True
+        c1, c2, c3 = st.columns(3)
+        if c1.button("⬅️ Precedente"):
+            if st.session_state.indice > 0:
+                st.session_state.indice -= 1
                 st.rerun()
-        with c3:
-            if st.button("Succ. ➡️", use_container_width=True, key="btn_succ"):
-                if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
-                    st.session_state.indice += 1
-                    st.rerun()
+        if c2.button("🏁 CONSEGNA", use_container_width=True):
+            st.session_state.fase = "CONFERMA"
+            st.rerun()
+        if c3.button("Successivo ➡️"):
+            if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
+                st.session_state.indice += 1
+                st.rerun()
+    else:
+        st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
+
 with col_dx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;">Selezione gruppi</p>', unsafe_allow_html=True)
     st.checkbox("Modalità simulazione (30 min)", key="simulazione")
@@ -257,16 +236,3 @@ with col_dx:
         r1.text_input("Dal", key=f"da_{i}", placeholder="Dal", label_visibility="collapsed")
         r2.text_input("Al", key=f"a_{i}", placeholder="Al", label_visibility="collapsed")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
-
-
-
-
-
-
-
-
-
-
-
-
-
