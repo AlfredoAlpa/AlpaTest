@@ -29,7 +29,7 @@ st.markdown("""
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     
     /* Riduce lo spazio bianco in cima alla pagina */
-    .block-container { padding-top: 1rem !important; padding-bottom: 0rem !important; }
+    .block-container { padding-top: 1.5rem !important; padding-bottom: 0rem !important; }
 
     /* Titolo AlPaTest compatto */
     .logo-style { 
@@ -258,6 +258,7 @@ if n3.button("Successivo ⏭️", use_container_width=True):
         if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
             st.session_state.indice += 1
             st.rerun()
+
 
 
 
