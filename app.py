@@ -27,8 +27,8 @@ st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .logo-style { font-family: 'Georgia', serif; font-size: 3rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
-    .quesito-style { color: #FFEB3B !important; font-size: 2.2rem !important; font-weight: bold !important; line-height: 1.3; }
-    .stRadio label p { font-size: 1.8rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
+    .quesito-style { color: #FFEB3B !important; font-size: 1.8rem !important; font-weight: bold !important; line-height: 1.3; }
+    .stRadio label p { font-size: 1.2rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
     div[data-testid="stRadio"] > div { align-items: flex-start !important; color: white !important; }
     .timer-style { font-size: 2.5rem; font-weight: bold; text-align: right; }
     .stButton>button { height: 50px !important; font-weight: bold !important; }
@@ -234,5 +234,6 @@ if n3.button("Successivo ⏭️", use_container_width=True):
         if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
             st.session_state.indice += 1
             st.rerun()
+
 
 
