@@ -238,18 +238,23 @@ with col_centro:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
 with col_dx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:5px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     
     if st.session_state.dict_discipline:
-        with st.expander("📖 Elenco Discipline", expanded=True):
+        with st.expander("📖 Legenda", expanded=True):
             for cod, testo in st.session_state.dict_discipline.items():
-                st.markdown(f"**{cod}**: {testo}")
+                st.markdown(f"<p style='font-size:0.8rem; margin-bottom:2px;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
     
     st.write("---")
-    st.checkbox("Modalità simulazione (30 min)", key="simulazione")
+    st.checkbox("Simulazione (30 min)", key="simulazione")
+    
+    c_tit1, c_tit2 = st.columns(2)
+    c_tit1.markdown("<p style='font-size:0.7rem; color:white; text-align:center;'>DAL n.</p>", unsafe_allow_html=True)
+    c_tit2.markdown("<p style='font-size:0.7rem; color:white; text-align:center;'>AL n.</p>", unsafe_allow_html=True)
+
     for i in range(10):
         r1, r2 = st.columns(2)
-        r1.text_input("Dal", key=f"da_{i}", placeholder="Dal", label_visibility="collapsed")
-        r2.text_input("Al", key=f"a_{i}", placeholder="Al", label_visibility="collapsed")
+        r1.text_input("Dal", key=f"da_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
+        r2.text_input("Al", key=f"a_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
+        
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
-
