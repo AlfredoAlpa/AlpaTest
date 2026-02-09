@@ -54,7 +54,7 @@ if not st.session_state.autenticato:
         /* 5. Centra e ingrandisce il pulsante 'Entra' */
         div.stButton > button {
             display: block !important;
-            margin: 400px !important;
+            margin: 400 px !important;
             width: 300px !important;
             height: 60px !important;
             font-size: 1.8rem !important;
@@ -318,6 +318,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
