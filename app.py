@@ -25,41 +25,25 @@ if not st.session_state.autenticato:
 # --- CSS ---
 st.markdown("""
     <style>
-    /* 1. SFONDO GENERALE */
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
-
-    /* 2. TITOLO (Accesso AlPaTest) */
-    h1 { font-size: 4rem !important; color: #FFD700 !important; text-align: center !important; }
-
-    /* 3. SCRITTA "Inserisci il codice di accesso" */
-    .stTextInput label p { font-size: 2rem !important; color: white !important; font-weight: bold !important; }
-
-    /* 4. CASELLA DI TESTO E CARATTERI DEL CODICE */
-    .stTextInput input { 
-        font-size: 3rem !important; 
-        height: 80px !important; 
-        text-align: center !important; 
-        color: #1A3651 !important; 
-        font-weight: bold !important; 
-    }
-
-    /* 5. PULSANTE "ENTRA" */
-    .stButton button { 
-        font-size: 2.5rem !important; 
-        height: 80px !important; 
-        width: 100% !important; 
-        background-color: #FFD700 !important; 
-        color: black !important; 
-    }
-
-    /* RESTO DELLO STILE */
     .block-container { padding-top: 4rem !important; padding-bottom: 0rem !important; }
-    .logo-style { font-family: 'Georgia', serif; font-size: 3rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; line-height: 1.0; margin-bottom: -10px; }
+    .logo-style { 
+        font-family: 'Georgia', serif; 
+        font-size: 3rem; 
+        font-weight: bold; 
+        color: #FFD700; 
+        text-shadow: 2px 2px 4px #000;
+        line-height: 1.0; 
+        margin-bottom: -10px; 
+    }
     .quesito-style { color: #FFEB3B !important; font-size: 1.5rem !important; font-weight: bold !important; line-height: 1.2; }
     .stRadio label p { font-size: 1.2rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
+    div[data-testid="stRadio"] > div { align-items: flex-start !important; color: white !important; }
     .timer-style { font-size: 2.5rem; font-weight: bold; text-align: right; }
+    .stButton>button { height: 50px !important; font-weight: bold !important; }
     .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; }
     hr { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
+    .stAlert p { font-size: 0.9rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
