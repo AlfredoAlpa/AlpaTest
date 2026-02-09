@@ -25,6 +25,13 @@ if not st.session_state.autenticato:
 # --- CSS ---
 st.markdown("""
     <style>
+    /* Ingrandisce il codice di accesso */
+    div[data-baseweb="input"] input {
+        font-size: 35px !important;
+        height: 60px !important;
+        text-align: center !important;
+        font-weight: bold !important;
+    }
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .block-container { padding-top: 4rem !important; padding-bottom: 0rem !important; }
     .logo-style { 
@@ -263,3 +270,4 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
