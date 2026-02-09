@@ -12,6 +12,20 @@ if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
+    # --- MODIFICA GIGANTE SOLO PER LOGIN ---
+    st.markdown("""
+        <style>
+        /* Ingrandisce il titolo */
+        h1 { font-size: 5rem !important; text-align: center !important; color: #FFD700 !important; }
+        /* Ingrandisce la scritta "Inserisci il codice" */
+        .stTextInput label p { font-size: 2.5rem !important; color: white !important; text-align: center !important; }
+        /* Ingrandisce la casella di testo e i pallini della password */
+        input[type="password"] { font-size: 4rem !important; height: 100px !important; text-align: center !important; }
+        /* Ingrandisce il pulsante Entra */
+        div.stButton > button { font-size: 3rem !important; height: 100px !important; width: 100% !important; background-color: #FFD700 !important; }
+        </style>
+    """, unsafe_allow_html=True)
+    
     st.title("🔐 Accesso AlPaTest")
     codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
     if st.button("Entra"):
@@ -141,7 +155,6 @@ def importa_quesiti():
         except:
             st.warning("Foglio 'Punteggi' non trovato. Uso valori predefiniti.")
         frames = []
-        # Legge fino a 9 righe (compatibile con la colonna dx)
         for i in range(len(st.session_state.dict_discipline)):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
             if d.isdigit() and a.isdigit():
@@ -259,12 +272,10 @@ with col_dx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     
     if st.session_state.dict_discipline:
-        # Mostriamo fino a 9 righe basandoci sulle chiavi del dizionario caricato
         chiavi = list(st.session_state.dict_discipline.keys())[:9]
         
         for i, cod in enumerate(chiavi):
             testo = st.session_state.dict_discipline[cod]
-            # Colonne: testo largo, input "Da" stretto, input "A" stretto
             c1, c2, c3 = st.columns([6, 2, 2])
             
             with c1:
@@ -279,9 +290,3 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
-
-
-
-
-
-
