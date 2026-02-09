@@ -26,13 +26,13 @@ if not st.session_state.autenticato:
         
         /* Centra e allarga la casella di input */
         div[data-testid="stTextInput"] { 
-            width: 800px !important; 
+            width: 550px !important; 
             margin: 0 auto !important; 
         }
         
         /* CORREZIONE TAGLIO TESTO: Altezza maggiore e padding */
         div[data-testid="stTextInput"] input { 
-            height: 100px !important;  /* Aumentata altezza */
+            height: 50px !important;  /* Aumentata altezza */
             font-size: 3rem !important; /* Testo grande e leggibile */
             text-align: center !important; 
             padding-bottom: 15px !important; /* Spazio extra sotto per non tagliare le lettere */
@@ -263,5 +263,6 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
 
 
