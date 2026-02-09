@@ -28,9 +28,8 @@ if not st.session_state.autenticato:
             font-size: 2.5rem !important;
             text-align: center !important;
             border: 2px solid #FFD700 !important;
-            background-color: #1A3651 !important;
-            color: white !important;
-            padding-bottom: 10px !important;
+            background-color: white !important;
+            color: black !important;
         }
         div[data-testid="stTextInput"] label { display: none !important; }
         div.stButton > button {
@@ -48,7 +47,7 @@ if not st.session_state.autenticato:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown('<h1 style="color:#FFD700;">🔐 Accesso AlPaTest</h1>', unsafe_allow_html=True)
     st.markdown('<p style="color:#FFD700; font-size:1.5rem; font-weight:bold;">Inserisci il codice di accesso:</p>', unsafe_allow_html=True)
-    codice = st.text_input("Codice", type="password").strip()
+    codice = st.text_input("Codice", type="password", key="login_key").strip()
     if st.button("Entra"):
         if codice.lower() in ["open", "studente01"]:
             st.session_state.autenticato = True
@@ -58,7 +57,7 @@ if not st.session_state.autenticato:
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# 3. CSS E INIZIALIZZAZIONE
+# 3. CSS GENERALE
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); }
@@ -67,30 +66,32 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# 4. INIZIALIZZAZIONE SESSIONE
 if 'fase' not in st.session_state: st.session_state.fase = "CONFIG"
 if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'indice' not in st.session_state: st.session_state.indice = 0
 
-# 4. FUNZIONI PDF E CALCOLI (LARGHEZZA 100)
+# 5. FUNZIONE PDF (LARGHEZZA UTILE 100)
 def pulisci_testo(testo):
     return str(testo).encode('latin-1', 'replace').decode('latin-1')
 
 def calcola_risultati():
     esatte, errate, non_date = 0, 0, 0
-    for i, row in st.session_state.df_filtrato.iterrows():
-        r_u = st.session_state.risposte_date.get(i)
-        r_e = str(row['Corretta']).strip()
-        if r_u is None: non_date += 1
-        elif r_u == r_e: esatte += 1
-        else: errate += 1
-    punteggio = (esatte * 0.75) + (errate * -0.25)
-    return esatte, errate, non_date, round(punteggio, 2)
+    if 'df_filtrato' in st.session_state:
+        for i, row in st.session_state.df_filtrato.iterrows():
+            r_u = st.session_state.risposte_date.get(i)
+            r_e = str(row['Corretta']).strip()
+            if r_u is None: non_date += 1
+            elif r_u == r_e: esatte += 1
+            else: errate += 1
+    punti = (esatte * 0.75) + (errate * -0.25)
+    return esatte, errate, non_date, round(punti, 2)
 
 def genera_report_pdf():
     esatte, errate, non_date, punti = calcola_risultati()
     pdf = FPDF()
     pdf.add_page()
-    # LA TUA LARGHEZZA UTILE
+    # LA TUA LARGHEZZA FUNZIONANTE
     larghezza_utile = 100 
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, "REPORT FINALE ALPA TEST", ln=True)
@@ -106,54 +107,41 @@ def genera_report_pdf():
         pdf.ln(2)
     return bytes(pdf.output())
 
-# 5. LOGICA PRINCIPALE
+# 6. LOGICA PRINCIPALE
 st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
+st.write("---")
 
 if st.session_state.fase == "CONFIG":
-    try:
+    if os.path.exists("quiz.xlsx"):
         df = pd.read_excel("quiz.xlsx")
         materie = df['Materia'].unique().tolist()
-        
         with st.sidebar:
             st.title("⚙️ Impostazioni")
             materia_scelta = st.selectbox("Scegli Materia", materie)
             n_domande = st.number_input("Numero Domande", 5, 100, 20)
             tempo_min = st.slider("Minuti", 1, 60, 10)
-            
             if st.button("🚀 INIZIA TEST"):
                 st.session_state.df_filtrato = df[df['Materia'] == materia_scelta].sample(n_domande).reset_index(drop=True)
                 st.session_state.fase = "QUIZ"
-                st.session_state.inizio_test = time.time()
-                st.session_state.fine_test = st.session_state.inizio_test + (tempo_min * 60)
+                st.session_state.fine_test = time.time() + (tempo_min * 60)
                 st.rerun()
-    except Exception as e:
-        st.error(f"Errore caricamento file: {e}")
+    else:
+        st.error("File quiz.xlsx non trovato su GitHub!")
 
 elif st.session_state.fase == "QUIZ":
     t_rimanente = int(st.session_state.fine_test - time.time())
     if t_rimanente <= 0:
         st.session_state.fase = "RISULTATI"
         st.rerun()
-    
     st.sidebar.metric("⏳ Tempo", f"{t_rimanente // 60}:{t_rimanente % 60:02d}")
-    
     q = st.session_state.df_filtrato.iloc[st.session_state.indice]
     st.markdown(f'<p class="quesito-style">Domanda {st.session_state.indice + 1}</p>', unsafe_allow_html=True)
     st.subheader(q['Domanda'])
-    
-    # Gestione Immagini
-    if pd.notna(q.get('Immagine')):
-        img_path = os.path.join("immagini", str(q['Immagine']).strip())
-        if os.path.exists(img_path):
-            st.image(img_path, width=400)
-
     opzioni = [str(q['A']), str(q['B']), str(q['C']), str(q['D'])]
     scelta = st.radio("Seleziona la risposta:", opzioni, index=None, key=f"q_{st.session_state.indice}")
-    
     if scelta:
-        mappa_risposte = {str(q['A']): 'A', str(q['B']): 'B', str(q['C']): 'C', str(q['D']): 'D'}
-        st.session_state.risposte_date[st.session_state.indice] = mappa_risposte[scelta]
-
+        mappa = {str(q['A']):'A', str(q['B']):'B', str(q['C']):'C', str(q['D']):'D'}
+        st.session_state.risposte_date[st.session_state.indice] = mappa[scelta]
     col1, col2 = st.columns(2)
     with col1:
         if st.button("⬅️ Precedente") and st.session_state.indice > 0:
@@ -171,18 +159,9 @@ elif st.session_state.fase == "QUIZ":
 
 elif st.session_state.fase == "RISULTATI":
     esatte, errate, non_date, punti = calcola_risultati()
-    st.balloons()
-    st.markdown(f"""
-        <div style="background:rgba(255,215,0,0.1); padding:20px; border-radius:15px; border:2px solid #FFD700; text-align:center;">
-            <h2>Esito Test</h2>
-            <h1>{punti} Punti</h1>
-            <p>Esatte: {esatte} | Errate: {errate} | Non date: {non_date}</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
+    st.success(f"Test Completato! Punteggio: {punti}")
     pdf_data = genera_report_pdf()
-    st.download_button("📥 Scarica Report PDF", pdf_data, "Report_AlPaTest.pdf", "application/pdf")
-    
+    st.download_button("📥 Scarica Report PDF", pdf_data, "Report.pdf", "application/pdf")
     if st.button("🔄 Ricomincia"):
         st.session_state.fase = "CONFIG"
         st.session_state.risposte_date = {}
