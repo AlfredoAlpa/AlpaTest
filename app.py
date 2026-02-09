@@ -8,6 +8,10 @@ from fpdf import FPDF
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # --- LOGIN ---
+# Inizializzazione variabile di stato (necessaria per non avere l'errore)
+if 'autenticato' not in st.session_state:
+    st.session_state.autenticato = False
+
 if not st.session_state.autenticato:
     # --- STILE SPECIFICO PER CENTRARE TUTTA LA LOGIN ---
     st.markdown("""
@@ -72,7 +76,7 @@ if not st.session_state.autenticato:
             st.error("Codice errato")
     st.stop()
 
-# --- CSS ---
+# --- CSS GENERALE (Applicato dopo il login) ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
@@ -313,5 +317,6 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
