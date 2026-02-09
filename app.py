@@ -26,7 +26,7 @@ if not st.session_state.autenticato:
         
         /* Centra e allarga la casella di input */
         div[data-testid="stTextInput"] { 
-            width: 550px !important; 
+            width: 50px !important; 
             margin: 0 auto !important; 
         }
         
@@ -263,6 +263,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
