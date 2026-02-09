@@ -240,6 +240,7 @@ with col_centro:
 with col_dx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:5px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     
+    # 1. Elenco Discipline
     if st.session_state.dict_discipline:
         with st.expander("📖 Legenda", expanded=True):
             for cod, testo in st.session_state.dict_discipline.items():
@@ -248,13 +249,19 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     
-    c_tit1, c_tit2 = st.columns(2)
-    c_tit1.markdown("<p style='font-size:0.7rem; color:white; text-align:center;'>DAL n.</p>", unsafe_allow_html=True)
-    c_tit2.markdown("<p style='font-size:0.7rem; color:white; text-align:center;'>AL n.</p>", unsafe_allow_html=True)
+    # Intestazione delle colonnine
+    c1, c2 = st.columns(2)
+    c1.markdown("<p style='font-size:0.7rem; color:white; text-align:center; margin-bottom:0;'>DAL n.</p>", unsafe_allow_html=True)
+    c2.markdown("<p style='font-size:0.7rem; color:white; text-align:center; margin-bottom:0;'>AL n.</p>", unsafe_allow_html=True)
 
+    # 2. Campi affiancati (Uno accanto all'altro)
     for i in range(10):
-        r1, r2 = st.columns(2)
-        r1.text_input("Dal", key=f"da_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
-        r2.text_input("Al", key=f"a_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
-        
+        # Creiamo due sottocolonne per ogni riga del ciclo
+        riga_col1, riga_col2 = st.columns(2) 
+        with riga_col1:
+            st.text_input("Dal", key=f"da_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
+        with riga_col2:
+            st.text_input("Al", key=f"a_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
+    
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
