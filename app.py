@@ -67,7 +67,6 @@ if not st.session_state.autenticato:
     codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
 
     # --- CENTRATURA PULSANTE TRAMITE COLONNE ---
-    # Creiamo 3 colonne: le laterali vuote spingono quella centrale (larghezza 300px circa)
     col_l, col_btn, col_r = st.columns([1, 1, 1]) 
 
     with col_btn:
@@ -259,4 +258,5 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
 
