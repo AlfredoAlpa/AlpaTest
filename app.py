@@ -8,43 +8,62 @@ from fpdf import FPDF
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # --- LOGIN ---
-if 'autenticato' not in st.session_state:
-    st.session_state.autenticato = False
-
 if not st.session_state.autenticato:
-    # --- INIZIO MODIFICA GRAFICA LOGIN ---
+    # --- STILE SPECIFICO PER CENTRARE TUTTA LA LOGIN ---
     st.markdown("""
         <style>
-        /* Centra e accorcia la barra di inserimento */
-        div[data-testid="stTextInput"] {
-            width: 500px !important; 
-            margin: 0 auto;
+        /* 1. Centra il titolo */
+        .centered-title {
+            text-align: center;
+            color: #FFD700;
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
         }
-        /* Rende la cella alta e il testo grande */
+        
+        /* 2. Centra e dimensiona la casella di testo */
+        div[data-testid="stTextInput"] {
+            width: 450px !important;
+            margin: 0 auto !important;
+        }
+        
+        /* 3. Altezza cella e font del codice inserito */
         div[data-testid="stTextInput"] input {
-            height: 90px !important;
-            font-size: 3rem !important;
+            height: 70px !important;
+            font-size: 2.5rem !important;
             text-align: center !important;
         }
-        /* Ingrandisce la scritta sopra la cella */
-        div[data-testid="stTextInput"] label p {
-            font-size: 1.8rem !important;
-            color: #FFD700 !important;
-            text-align: center;
+
+        /* 4. Centra e ingrandisce l'etichetta "Inserisci codice" */
+        div[data-testid="stTextInput"] label {
+            display: flex !important;
+            justify-content: center !important;
+            margin-bottom: 10px !important;
         }
-        /* Ingrandisce e centra il pulsante Entra */
+        div[data-testid="stTextInput"] label p {
+            font-size: 1.6rem !important;
+            color: #FFD700 !important;
+            font-weight: bold !important;
+        }
+
+        /* 5. Centra e ingrandisce il pulsante 'Entra' */
         div.stButton > button {
-            display: block;
-            margin: 30px auto !important;
-            width: 250px !important;
-            height: 70px !important;
-            font-size: 2rem !important;
+            display: block !important;
+            margin: 40px auto !important;
+            width: 300px !important;
+            height: 60px !important;
+            font-size: 1.8rem !important;
+            background-color: #FFD700 !important;
+            color: black !important;
         }
         </style>
     """, unsafe_allow_html=True)
-    # --- FINE MODIFICA GRAFICA LOGIN ---
-    st.title("🔐 Accesso AlPaTest")
+
+    # --- ELEMENTI DELLA PAGINA ---
+    st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
+    
     codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
+    
     if st.button("Entra"):
         if codice.lower() in ["open", "studente01"]:
             st.session_state.autenticato = True
@@ -294,4 +313,5 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
