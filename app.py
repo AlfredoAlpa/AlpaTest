@@ -137,16 +137,16 @@ def calcola_risultati():
 def genera_report_pdf():
     esatte, errate, non_date, punti_tot = calcola_risultati()
     pdf = FPDF(); pdf.add_page(); pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(100, 10, "REPORT FINALE - AlPaTest", ln=True, align='C')
+    pdf.cell(190, 10, "REPORT FINALE - AlPaTest", ln=True, align='C')
     pdf.set_font("helvetica", '', 12)
-    pdf.cell(100, 10, f"Punteggio: {punti_tot} | Esatte: {esatte} | Errate: {errate} | N.D.: {non_date}", ln=True, align='C')
+    pdf.cell(190, 10, f"Punteggio: {punti_tot} | Esatte: {esatte} | Errate: {errate} | N.D.: {non_date}", ln=True, align='C')
     pdf.ln(10)
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         pdf.set_font("helvetica", 'B', 10)
-        pdf.multi_cell(100, 6, pulisci_testo(f"{i+1}. {row['Domanda']}"))
+        pdf.multi_cell(190, 6, pulisci_testo(f"{i+1}. {row['Domanda']}"))
         pdf.set_font("helvetica", '', 10)
-        pdf.cell(100, 6, pulisci_testo(f"Tua: {r_u} | Esatta: {row['Corretta']}"), ln=True)
+        pdf.cell(190, 6, pulisci_testo(f"Tua: {r_u} | Esatta: {row['Corretta']}"), ln=True)
         pdf.ln(2)
     return bytes(pdf.output())
 
@@ -263,6 +263,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
