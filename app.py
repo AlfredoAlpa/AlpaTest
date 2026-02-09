@@ -7,29 +7,77 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN ---
+# --- LOGIN (Versione Centrata) ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        .centered-title { text-align: center; color: #FFD700; font-size: 3.5rem; font-weight: bold; margin-bottom: 2rem; }
-        div[data-testid="stTextInput"] { width: 450px !important; margin: 0 auto !important; }
-        div[data-testid="stTextInput"] input { height: 70px !important; font-size: 2.5rem !important; text-align: center !important; }
-        div[data-testid="stTextInput"] label { display: flex !important; justify-content: center !important; margin-bottom: 10px !important; }
-        div[data-testid="stTextInput"] label p { font-size: 1.6rem !important; color: #FFD700 !important; font-weight: bold !important; }
-        div.stButton > button { display: block !important; margin: 40px auto !important; width: 300px !important; height: 60px !important; font-size: 2rem !important; background-color: #FFD700 !important; color: black !important; }
+        /* Centra il titolo principale */
+        .centered-title { 
+            text-align: center; 
+            color: #FFD700; 
+            font-size: 3.5rem; 
+            font-weight: bold; 
+            margin-bottom: 2rem; 
+        }
+        
+        /* Centra la casella di input e ne definisce la larghezza */
+        div[data-testid="stTextInput"] { 
+            width: 450px !important; 
+            margin: 0 auto !important; 
+        }
+        
+        /* Stile del testo dentro l'input */
+        div[data-testid="stTextInput"] input { 
+            height: 70px !important; 
+            font-size: 2.5rem !important; 
+            text-align: center !important; 
+        }
+        
+        /* Centra l'etichetta sopra l'input */
+        div[data-testid="stTextInput"] label { 
+            display: flex !important; 
+            justify-content: center !important; 
+            margin-bottom: 10px !important; 
+        }
+        div[data-testid="stTextInput"] label p { 
+            font-size: 1.6rem !important; 
+            color: #FFD700 !important; 
+            font-weight: bold !important; 
+        }
+
+        /* Stile del pulsante: larghezza 100% rispetto alla sua colonna */
+        div.stButton > button { 
+            width: 100% !important; 
+            height: 65px !important; 
+            font-size: 2.2rem !important; 
+            background-color: #FFD700 !important; 
+            color: black !important; 
+            border-radius: 10px !important;
+            font-weight: bold !important;
+        }
         </style>
     """, unsafe_allow_html=True)
+
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
+    
+    # Campo di input centrato dal CSS
     codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
-    if st.button("Entra"):
-        if codice.lower() in ["open", "studente01"]:
-            st.session_state.autenticato = True
-            st.rerun()
-        else:
-            st.error("Codice errato")
+
+    # --- CENTRATURA PULSANTE TRAMITE COLONNE ---
+    # Creiamo 3 colonne: le laterali vuote spingono quella centrale (larghezza 300px circa)
+    col_l, col_btn, col_r = st.columns([1, 1, 1]) 
+
+    with col_btn:
+        if st.button("Entra"):
+            if codice.lower() in ["open", "studente01"]:
+                st.session_state.autenticato = True
+                st.rerun()
+            else:
+                st.error("Codice errato")
+                
     st.stop()
 
 # --- CSS GENERALE ---
@@ -211,3 +259,4 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
