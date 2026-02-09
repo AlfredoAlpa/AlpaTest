@@ -270,6 +270,7 @@ with col_centro:
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
         idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
+        # Funzione di salvataggio risposta
         def salva_r(): 
             chiave = f"r_{st.session_state.indice}"
             if chiave in st.session_state and st.session_state[chiave]:
@@ -278,24 +279,26 @@ with col_centro:
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
         st.write("---")
-        # --- MODIFICA PULSANTI: DIMENSIONE FISSA E ORDINE CORRETTO ---
+        # --- PULSANTI DI NAVIGAZIONE UNIFORMI ---
         c1, c2, c3 = st.columns(3)
+        
         with c1:
             if st.button("⬅️ Precedente", use_container_width=True):
                 if st.session_state.indice > 0:
                     st.session_state.indice -= 1
                     st.rerun()
+        
         with c2:
             if st.button("Successivo ➡️", use_container_width=True):
                 if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
                     st.session_state.indice += 1
                     st.rerun()
+
         with c3:
+            # Consegna a destra, stessa larghezza degli altri
             if st.button("🏁 CONSEGNA", use_container_width=True):
                 st.session_state.fase = "CONFERMA"
                 st.rerun()
-        # --- FINE MODIFICA PULSANTI ---
-
     else:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
@@ -317,6 +320,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
