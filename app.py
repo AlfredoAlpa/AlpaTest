@@ -238,30 +238,28 @@ with col_centro:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
 with col_dx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:5px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     
-    # 1. Elenco Discipline
     if st.session_state.dict_discipline:
-        with st.expander("📖 Legenda", expanded=True):
-            for cod, testo in st.session_state.dict_discipline.items():
-                st.markdown(f"<p style='font-size:0.8rem; margin-bottom:2px;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
+        # Creiamo una riga per ogni disciplina caricata da Excel
+        for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
+            # Dividiamo la riga in 3 parti: testo largo, input "Dal" stretto, input "Al" stretto
+            c1, c2, c3 = st.columns([6, 2, 2])
+            
+            with c1:
+                # Mostriamo il codice e la descrizione
+                st.markdown(f"<p style='font-size:0.85rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
+            
+            with c2:
+                # Usiamo la chiave 'da_0', 'da_1' ecc. per mantenere la compatibilità con la funzione importa_quesiti
+                st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed", max_chars=6)
+            
+            with c3:
+                # Usiamo la chiave 'a_0', 'a_1' ecc.
+                st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed", max_chars=6)
     
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     
-    # Intestazione delle colonnine
-    c1, c2 = st.columns(2)
-    c1.markdown("<p style='font-size:0.7rem; color:white; text-align:center; margin-bottom:0;'>DAL n.</p>", unsafe_allow_html=True)
-    c2.markdown("<p style='font-size:0.7rem; color:white; text-align:center; margin-bottom:0;'>AL n.</p>", unsafe_allow_html=True)
-
-    # 2. Campi affiancati (Uno accanto all'altro)
-    for i in range(10):
-        # Creiamo due sottocolonne per ogni riga del ciclo
-        riga_col1, riga_col2 = st.columns(2) 
-        with riga_col1:
-            st.text_input("Dal", key=f"da_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
-        with riga_col2:
-            st.text_input("Al", key=f"a_{i}", placeholder="0", label_visibility="collapsed", max_chars=6)
-    
+    # Il pulsante ora caricherà i range scritti accanto alle discipline
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
-
