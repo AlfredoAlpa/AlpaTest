@@ -27,7 +27,7 @@ st.markdown("""
     <style>
     /* Ingrandisce il codice di accesso */
     div[data-baseweb="input"] input {
-        font-size: 35px !important;
+        font-size: 50px !important;
         height: 60px !important;
         text-align: center !important;
         font-weight: bold !important;
@@ -270,6 +270,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
