@@ -49,6 +49,15 @@ st.markdown("""
 
 # --- INIZIALIZZAZIONE ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
+
+# --- CARICAMENTO DISCIPLINE DA EXCEL (Blocco 1 Sistemato) ---
+if 'dict_discipline' not in st.session_state:
+    try:
+        df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
+        st.session_state.dict_discipline = pd.Series(df_disc.Disciplina.values, index=df_disc.Codice).to_dict()
+    except Exception as e:
+        st.session_state.dict_discipline = {}
+
 if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
 if 'indice' not in st.session_state: st.session_state.indice = 0
 if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
@@ -211,7 +220,7 @@ with col_centro:
 
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
-        # --- PULSANTI SPOSTATI QUI ---
+        # --- PULSANTI ---
         st.write("---")
         c1, c2, c3 = st.columns(3)
         if c1.button("⬅️ Precedente"):
@@ -229,7 +238,14 @@ with col_centro:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
 with col_dx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;">Selezione gruppi</p>', unsafe_allow_html=True)
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
+    
+    if st.session_state.dict_discipline:
+        with st.expander("📖 Elenco Discipline", expanded=True):
+            for cod, testo in st.session_state.dict_discipline.items():
+                st.markdown(f"**{cod}**: {testo}")
+    
+    st.write("---")
     st.checkbox("Modalità simulazione (30 min)", key="simulazione")
     for i in range(10):
         r1, r2 = st.columns(2)
