@@ -8,24 +8,72 @@ from fpdf import FPDF
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # --- LOGIN (Versione Centrata) ---
+# --- LOGIN (Versione Centrata con Spazio Testo Ottimizzato) ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        .centered-title { text-align: center; color: #FFD700; font-size: 3.5rem; font-weight: bold; margin-bottom: 2rem; }
-        div[data-testid="stTextInput"] { width: 450px !important; margin: 0 auto !important; }
-        div[data-testid="stTextInput"] input { height: 70px !important; font-size: 2.5rem !important; text-align: center !important; }
-        div[data-testid="stTextInput"] label { display: flex !important; justify-content: center !important; margin-bottom: 10px !important; }
-        div[data-testid="stTextInput"] label p { font-size: 1.6rem !important; color: #FFD700 !important; font-weight: bold !important; }
-        div.stButton > button { width: 100% !important; height: 65px !important; font-size: 2.2rem !important; background-color: #FFD700 !important; color: black !important; border-radius: 10px !important; font-weight: bold !important; }
+        /* Centra il titolo principale */
+        .centered-title { 
+            text-align: center; 
+            color: #FFD700; 
+            font-size: 3.5rem; 
+            font-weight: bold; 
+            margin-bottom: 2rem; 
+        }
+        
+        /* Centra e allarga la casella di input */
+        div[data-testid="stTextInput"] { 
+            width: 550px !important; 
+            margin: 0 auto !important; 
+        }
+        
+        /* CORREZIONE TAGLIO TESTO: Altezza maggiore e padding */
+        div[data-testid="stTextInput"] input { 
+            height: 100px !important;  /* Aumentata altezza */
+            font-size: 3rem !important; /* Testo grande e leggibile */
+            text-align: center !important; 
+            padding-bottom: 15px !important; /* Spazio extra sotto per non tagliare le lettere */
+            padding-top: 10px !important;
+            line-height: 1.5 !important;
+        }
+        
+        /* Centra l'etichetta sopra l'input */
+        div[data-testid="stTextInput"] label { 
+            display: flex !important; 
+            justify-content: center !important; 
+            margin-bottom: 15px !important; 
+        }
+        div[data-testid="stTextInput"] label p { 
+            font-size: 1.8rem !important; 
+            color: #FFD700 !important; 
+            font-weight: bold !important; 
+        }
+
+        /* Stile del pulsante: centrato nella sua colonna */
+        div.stButton > button { 
+            width: 100% !important; 
+            height: 70px !important; 
+            font-size: 2.2rem !important; 
+            background-color: #FFD700 !important; 
+            color: black !important; 
+            border-radius: 12px !important;
+            font-weight: bold !important;
+            margin-top: 20px !important;
+        }
         </style>
     """, unsafe_allow_html=True)
+
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
-    codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
     
+    # Campo di input
+    codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
+
+    # --- CENTRATURA PULSANTE ---
     col_l, col_btn, col_r = st.columns([1, 1, 1]) 
+
     with col_btn:
         if st.button("Entra"):
             if codice.lower() in ["open", "studente01"]:
@@ -33,8 +81,8 @@ if not st.session_state.autenticato:
                 st.rerun()
             else:
                 st.error("Codice errato")
+                
     st.stop()
-
 # --- CSS GENERALE ---
 st.markdown("""
     <style>
@@ -215,3 +263,4 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
