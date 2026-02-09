@@ -14,61 +14,18 @@ if 'autenticato' not in st.session_state:
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* Centra il titolo principale */
-        .centered-title { 
-            text-align: center; 
-            color: #FFD700; 
-            font-size: 3.5rem; 
-            font-weight: bold; 
-            margin-bottom: 2rem; 
-        }
-        
-        /* Centra la casella di input e ne definisce la larghezza */
-        div[data-testid="stTextInput"] { 
-            width: 450px !important; 
-            margin: 0 auto !important; 
-        }
-        
-        /* Stile del testo dentro l'input */
-        div[data-testid="stTextInput"] input { 
-            height: 70px !important; 
-            font-size: 2.5rem !important; 
-            text-align: center !important; 
-        }
-        
-        /* Centra l'etichetta sopra l'input */
-        div[data-testid="stTextInput"] label { 
-            display: flex !important; 
-            justify-content: center !important; 
-            margin-bottom: 10px !important; 
-        }
-        div[data-testid="stTextInput"] label p { 
-            font-size: 1.6rem !important; 
-            color: #FFD700 !important; 
-            font-weight: bold !important; 
-        }
-
-        /* Stile del pulsante: larghezza 100% rispetto alla sua colonna */
-        div.stButton > button { 
-            width: 100% !important; 
-            height: 65px !important; 
-            font-size: 2.2rem !important; 
-            background-color: #FFD700 !important; 
-            color: black !important; 
-            border-radius: 10px !important;
-            font-weight: bold !important;
-        }
+        .centered-title { text-align: center; color: #FFD700; font-size: 3.5rem; font-weight: bold; margin-bottom: 2rem; }
+        div[data-testid="stTextInput"] { width: 450px !important; margin: 0 auto !important; }
+        div[data-testid="stTextInput"] input { height: 70px !important; font-size: 2.5rem !important; text-align: center !important; }
+        div[data-testid="stTextInput"] label { display: flex !important; justify-content: center !important; margin-bottom: 10px !important; }
+        div[data-testid="stTextInput"] label p { font-size: 1.6rem !important; color: #FFD700 !important; font-weight: bold !important; }
+        div.stButton > button { width: 100% !important; height: 65px !important; font-size: 2.2rem !important; background-color: #FFD700 !important; color: black !important; border-radius: 10px !important; font-weight: bold !important; }
         </style>
     """, unsafe_allow_html=True)
-
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
-    
-    # Campo di input centrato dal CSS
     codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
-
-    # --- CENTRATURA PULSANTE TRAMITE COLONNE ---
+    
     col_l, col_btn, col_r = st.columns([1, 1, 1]) 
-
     with col_btn:
         if st.button("Entra"):
             if codice.lower() in ["open", "studente01"]:
@@ -76,7 +33,6 @@ if not st.session_state.autenticato:
                 st.rerun()
             else:
                 st.error("Codice errato")
-                
     st.stop()
 
 # --- CSS GENERALE ---
@@ -172,12 +128,13 @@ def mostra_timer():
             st.session_state.fase = "CONCLUSIONE"
             st.rerun()
 
-# --- LOGICA DI CONTROLLO FASI (SISTEMA LO SCHERMO BIANCO) ---
+# --- LOGICA DI CONTROLLO FASI ---
 if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
     st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
     st.write("---")
     if st.session_state.fase == "CONFERMA":
-        st.markdown("<div class="risultato-box"><h2>❓ Vuoi consegnare la prova?</h2>", unsafe_allow_html=True)
+        # CORREZIONE QUI: Virgolole esterne doppie, interne singole
+        st.markdown("<div class='risultato-box'><h2>❓ Vuoi consegnare la prova?</h2>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             if st.button("✅ SÌ, CONSEGNA", use_container_width=True):
@@ -258,5 +215,3 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
-
-
