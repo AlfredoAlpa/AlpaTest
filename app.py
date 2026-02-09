@@ -270,13 +270,15 @@ with col_centro:
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
         idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
-        # Funzione di salvataggio risposta
-        def salva_r(): 
-            chiave = f"r_{st.session_state.indice}"
-            if chiave in st.session_state and st.session_state[chiave]:
-                st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
+        # --- DEFINIAMO LA CHIAVE PRIMA DELLA FUNZIONE ---
+        chiave_radio = f"r_{st.session_state.indice}"
 
-        st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+        def salva_r(): 
+            if chiave_radio in st.session_state and st.session_state[chiave_radio]:
+                # Prende la prima lettera (A, B, C o D)
+                st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave_radio][0]
+
+        st.radio("Scelte", opts, key=chiave_radio, index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
         st.write("---")
         # --- PULSANTI DI NAVIGAZIONE UNIFORMI ---
@@ -295,7 +297,6 @@ with col_centro:
                     st.rerun()
 
         with c3:
-            # Consegna a destra, stessa larghezza degli altri
             if st.button("🏁 CONSEGNA", use_container_width=True):
                 st.session_state.fase = "CONFERMA"
                 st.rerun()
@@ -320,6 +321,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
