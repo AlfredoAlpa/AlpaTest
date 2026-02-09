@@ -278,18 +278,24 @@ with col_centro:
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
         st.write("---")
+        # --- MODIFICA PULSANTI: DIMENSIONE FISSA E ORDINE CORRETTO ---
         c1, c2, c3 = st.columns(3)
-        if c1.button("⬅️ Precedente"):
-            if st.session_state.indice > 0:
-                st.session_state.indice -= 1
+        with c1:
+            if st.button("⬅️ Precedente", use_container_width=True):
+                if st.session_state.indice > 0:
+                    st.session_state.indice -= 1
+                    st.rerun()
+        with c2:
+            if st.button("Successivo ➡️", use_container_width=True):
+                if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
+                    st.session_state.indice += 1
+                    st.rerun()
+        with c3:
+            if st.button("🏁 CONSEGNA", use_container_width=True):
+                st.session_state.fase = "CONFERMA"
                 st.rerun()
-        if c2.button("🏁 CONSEGNA", use_container_width=True):
-            st.session_state.fase = "CONFERMA"
-            st.rerun()
-        if c3.button("Successivo ➡️"):
-            if st.session_state.indice < len(st.session_state.df_filtrato) - 1:
-                st.session_state.indice += 1
-                st.rerun()
+        # --- FINE MODIFICA PULSANTI ---
+
     else:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
@@ -297,20 +303,14 @@ with col_dx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     
     if st.session_state.dict_discipline:
-        # Mostriamo fino a 9 righe basandoci sulle chiavi del dizionario caricato
         chiavi = list(st.session_state.dict_discipline.keys())[:9]
-        
         for i, cod in enumerate(chiavi):
             testo = st.session_state.dict_discipline[cod]
-            # Colonne: testo largo, input "Da" stretto, input "A" stretto
             c1, c2, c3 = st.columns([6, 2, 2])
-            
             with c1:
                 st.markdown(f"<p style='font-size:0.85rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
-            
             with c2:
                 st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed", max_chars=6)
-            
             with c3:
                 st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed", max_chars=6)
     
