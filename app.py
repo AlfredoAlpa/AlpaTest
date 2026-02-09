@@ -50,10 +50,12 @@ st.markdown("""
 # --- INIZIALIZZAZIONE ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 
-# --- CARICAMENTO DISCIPLINE DA EXCEL (Blocco 1 Sistemato) ---
+# --- CARICAMENTO DISCIPLINE DA EXCEL (Con pulizia nan) ---
 if 'dict_discipline' not in st.session_state:
     try:
         df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
+        # Rimuove righe vuote o con nan
+        df_disc = df_disc.dropna(subset=['Codice', 'Disciplina'])
         st.session_state.dict_discipline = pd.Series(df_disc.Disciplina.values, index=df_disc.Codice).to_dict()
     except Exception as e:
         st.session_state.dict_discipline = {}
@@ -123,7 +125,8 @@ def importa_quesiti():
         except:
             st.warning("Foglio 'Punteggi' non trovato. Uso valori predefiniti.")
         frames = []
-        for i in range(10):
+        # Legge fino a 9 righe (compatibile con la colonna dx)
+        for i in range(len(st.session_state.dict_discipline)):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
             if d.isdigit() and a.isdigit():
                 frames.append(df.iloc[int(d)-1 : int(a)])
@@ -220,7 +223,6 @@ with col_centro:
 
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
-        # --- PULSANTI ---
         st.write("---")
         c1, c2, c3 = st.columns(3)
         if c1.button("⬅️ Precedente"):
@@ -241,25 +243,23 @@ with col_dx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     
     if st.session_state.dict_discipline:
-        # Creiamo una riga per ogni disciplina caricata da Excel
-        for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
-            # Dividiamo la riga in 3 parti: testo largo, input "Dal" stretto, input "Al" stretto
+        # Mostriamo fino a 9 righe basandoci sulle chiavi del dizionario caricato
+        chiavi = list(st.session_state.dict_discipline.keys())[:9]
+        
+        for i, cod in enumerate(chiavi):
+            testo = st.session_state.dict_discipline[cod]
+            # Colonne: testo largo, input "Da" stretto, input "A" stretto
             c1, c2, c3 = st.columns([6, 2, 2])
             
             with c1:
-                # Mostriamo il codice e la descrizione
                 st.markdown(f"<p style='font-size:0.85rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
             
             with c2:
-                # Usiamo la chiave 'da_0', 'da_1' ecc. per mantenere la compatibilità con la funzione importa_quesiti
                 st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed", max_chars=6)
             
             with c3:
-                # Usiamo la chiave 'a_0', 'a_1' ecc.
                 st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed", max_chars=6)
     
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
-    
-    # Il pulsante ora caricherà i range scritti accanto alle discipline
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
