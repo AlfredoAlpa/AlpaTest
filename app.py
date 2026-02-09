@@ -7,7 +7,7 @@ from fpdf import FPDF
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# 2. LOGIN CON BOX CENTRATO E STRISCIA SPAZIOSA
+# 2. LOGIN CON BOX CENTRATO
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
@@ -23,7 +23,6 @@ if not st.session_state.autenticato:
             margin: 50px auto;
             text-align: center;
         }
-        /* Stile della striscia di input codice */
         div[data-testid="stTextInput"] input {
             height: 90px !important;
             font-size: 2.2rem !important;
@@ -31,11 +30,8 @@ if not st.session_state.autenticato:
             border: 2px solid #FFD700 !important;
             background-color: white !important;
             color: black !important;
-            border-radius: 10px !important;
         }
         div[data-testid="stTextInput"] label { display: none !important; }
-        
-        /* Pulsante Entra grande e centrato */
         div.stButton > button {
             width: 100% !important;
             height: 65px !important;
@@ -44,28 +40,24 @@ if not st.session_state.autenticato:
             color: black !important;
             font-weight: bold !important;
             margin-top: 25px !important;
-            border-radius: 10px !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown('<h1 style="color:#FFD700; margin-bottom:0;">🔐 Accesso AlPaTest</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="color:#FFD700; font-size:1.4rem; margin-top:10px;">Inserisci il codice di accesso:</p>', unsafe_allow_html=True)
-    
+    st.markdown('<h1 style="color:#FFD700;">🔐 Accesso AlPaTest</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#FFD700; font-size:1.4rem;">Codice di accesso:</p>', unsafe_allow_html=True)
     codice = st.text_input("Codice", type="password", key="pwd_box").strip()
-
     if st.button("Entra"):
         if codice.lower() in ["open", "studente01"]:
             st.session_state.autenticato = True
             st.rerun()
         else:
             st.error("Codice errato")
-            
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# 3. CSS GENERALE APP
+# 3. CSS GENERALE
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); }
@@ -79,16 +71,17 @@ if 'fase' not in st.session_state: st.session_state.fase = "CONFIG"
 if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'indice' not in st.session_state: st.session_state.indice = 0
 
-# 5. FUNZIONI PDF (CON LARGHEZZA UTILE 100)
+# 5. FUNZIONI PDF (LARGHEZZA 100)
 def pulisci_testo(testo):
     return str(testo).encode('latin-1', 'replace').decode('latin-1')
 
 def calcola_risultati():
     esatte, errate, non_date = 0, 0, 0
     if 'df_filtrato' in st.session_state:
+        # Nota: usiamo 'corretta' con la minuscola come indicato dal tuo errore
         for i, row in st.session_state.df_filtrato.iterrows():
             r_u = st.session_state.risposte_date.get(i)
-            r_e = str(row['Corretta']).strip()
+            r_e = str(row['corretta']).strip()
             if r_u is None: non_date += 1
             elif r_u == r_e: esatte += 1
             else: errate += 1
@@ -99,53 +92,48 @@ def genera_report_pdf():
     esatte, errate, non_date, punti = calcola_risultati()
     pdf = FPDF()
     pdf.add_page()
-    
-    # --- LA TUA LARGHEZZA FUNZIONANTE ---
     larghezza_utile = 100 
-    
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, "REPORT FINALE ALPA TEST", ln=True)
     pdf.set_font("helvetica", '', 12)
     pdf.cell(larghezza_utile, 10, f"Esatte: {esatte} | Errate: {errate} | Punti: {punti}", ln=True)
     pdf.ln(10)
-    
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         pdf.set_font("helvetica", 'B', 10)
         pdf.multi_cell(larghezza_utile, 6, pulisci_testo(f"{i+1}. {row['Domanda']}"))
         pdf.set_font("helvetica", '', 10)
-        pdf.cell(larghezza_utile, 6, pulisci_testo(f"Tua: {r_u} | Corretta: {row['Corretta']}"), ln=True)
+        pdf.cell(larghezza_utile, 6, pulisci_testo(f"Tua: {r_u} | Corretta: {row['corretta']}"), ln=True)
         pdf.ln(2)
     return bytes(pdf.output())
 
-# 6. LOGICA PRINCIPALE
+# 6. LOGICA PRINCIPALE (MODIFICATA PER IL TUO EXCEL)
 st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
 st.write("---")
 
 if st.session_state.fase == "CONFIG":
     if os.path.exists("quiz.xlsx"):
-        df = pd.read_excel("quiz.xlsx")
-        df.columns = [str(c).strip() for c in df.columns] # Pulizia colonne
+        # LEGGIAMO IL FOGLIO "quiz"
+        df = pd.read_excel("quiz.xlsx", sheet_name="quiz")
+        df.columns = [str(c).strip() for c in df.columns]
         
-        # Cerca colonna Materia in modo flessibile
-        col_materia = next((c for c in df.columns if c.lower() == 'materia'), None)
-        
-        if col_materia:
-            materie = df[col_materia].unique().tolist()
+        # USIAMO "Argomento" INVECE DI "Materia"
+        if 'Argomento' in df.columns:
+            materie = df['Argomento'].unique().tolist()
             with st.sidebar:
                 st.title("⚙️ Impostazioni")
-                materia_scelta = st.selectbox("Scegli Materia", materie)
+                materia_scelta = st.selectbox("Scegli Materia/Argomento", materie)
                 n_domande = st.number_input("Numero Domande", 5, 100, 20)
                 tempo_min = st.slider("Minuti", 1, 60, 10)
                 if st.button("🚀 INIZIA TEST"):
-                    st.session_state.df_filtrato = df[df[col_materia] == materia_scelta].sample(n_domande).reset_index(drop=True)
+                    st.session_state.df_filtrato = df[df['Argomento'] == materia_scelta].sample(n_domande).reset_index(drop=True)
                     st.session_state.fase = "QUIZ"
                     st.session_state.fine_test = time.time() + (tempo_min * 60)
                     st.rerun()
         else:
-            st.error(f"Colonna 'Materia' non trovata. Colonne presenti: {list(df.columns)}")
+            st.error(f"Colonna 'Argomento' non trovata. Colonne presenti: {list(df.columns)}")
     else:
-        st.error("File 'quiz.xlsx' non trovato. Caricalo su GitHub!")
+        st.error("File 'quiz.xlsx' non trovato su GitHub!")
 
 elif st.session_state.fase == "QUIZ":
     t_rimanente = int(st.session_state.fine_test - time.time())
@@ -154,12 +142,10 @@ elif st.session_state.fase == "QUIZ":
         st.rerun()
     
     st.sidebar.metric("⏳ Tempo", f"{t_rimanente // 60}:{t_rimanente % 60:02d}")
-    
     q = st.session_state.df_filtrato.iloc[st.session_state.indice]
     st.markdown(f'<p class="quesito-style">Domanda {st.session_state.indice + 1}</p>', unsafe_allow_html=True)
     st.subheader(q['Domanda'])
     
-    # Immagini
     if 'Immagine' in q and pd.notna(q['Immagine']):
         img_path = os.path.join("immagini", str(q['Immagine']).strip())
         if os.path.exists(img_path):
@@ -167,7 +153,6 @@ elif st.session_state.fase == "QUIZ":
 
     opzioni = [str(q['A']), str(q['B']), str(q['C']), str(q['D'])]
     scelta = st.radio("Seleziona la risposta:", opzioni, index=None, key=f"q_{st.session_state.indice}")
-    
     if scelta:
         mappa = {str(q['A']):'A', str(q['B']):'B', str(q['C']):'C', str(q['D']):'D'}
         st.session_state.risposte_date[st.session_state.indice] = mappa[scelta]
@@ -190,10 +175,8 @@ elif st.session_state.fase == "QUIZ":
 elif st.session_state.fase == "RISULTATI":
     esatte, errate, non_date, punti = calcola_risultati()
     st.success(f"Test Completato! Punteggio: {punti}")
-    
     pdf_data = genera_report_pdf()
     st.download_button("📥 Scarica Report PDF", pdf_data, "Report_AlPaTest.pdf", "application/pdf")
-    
     if st.button("🔄 Ricomincia"):
         st.session_state.fase = "CONFIG"
         st.session_state.risposte_date = {}
