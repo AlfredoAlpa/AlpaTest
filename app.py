@@ -8,62 +8,62 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN PROTETTO E CENTRATO ---
+# --- LOGIN PROTETTO E CENTRATO (Passo 1 e 2) ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* 1. Il Box contenitore */
+        /* 1. Allarghiamo il Box in orizzontale e verticale */
         .login-box-centrale {
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
             padding: 40px;
-            width: 500px;
+            width: 600px; /* Più largo per far stare il titolo su una riga */
             margin: 50px auto !important;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.4);
             box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* 2. Il Titolo dentro il box */
+        /* Titolo su una riga */
         .login-titolo {
             color: #FFD700 !important;
-            font-size: 2.5rem !important;
+            font-size: 2.8rem !important;
             font-weight: 900 !important;
+            white-space: nowrap; /* Impedisce alla scritta di andare a capo */
             margin-bottom: 25px !important;
-            font-family: sans-serif;
         }
 
-        /* 3. La scritta 'Inserisci codice' */
+        /* Spazio per la scritta istruzioni */
         .login-istruzione {
             color: #FFFFFF !important;
-            font-size: 1.3rem !important;
+            font-size: 1.5rem !important;
             font-weight: bold !important;
-            margin-bottom: 15px !important;
+            margin-bottom: 20px !important;
         }
 
-        /* 4. La casella di testo (solo questa!) */
-        div[data-testid="stTextInput"] > div > div > input {
-            font-size: 2rem !important;
-            height: 60px !important;
-            text-align: center !important;
-            font-weight: bold !important;
-            color: #000000 !important;
-        }
-
-        /* 5. Il pulsante ENTRA (solo questo!) */
-        .stButton > button {
+        /* Centriamo il campo di testo e il pulsante dentro il box */
+        div[data-testid="stTextInput"], div.stButton {
             width: 100% !important;
-            height: 60px !important;
+            margin: 0 auto !important;
+        }
+        
+        div[data-testid="stTextInput"] input {
+            font-size: 2rem !important;
+            height: 65px !important;
+            text-align: center !important;
+        }
+
+        div.stButton > button {
+            width: 100% !important;
+            height: 65px !important;
             background-color: #FFD700 !important;
-            color: #000000 !important;
-            font-size: 1.8rem !important;
-            font-weight: 900 !important;
-            border-radius: 10px !important;
+            color: black !important;
+            font-size: 2rem !important;
+            font-weight: bold !important;
             margin-top: 20px !important;
-            border: none !important;
         }
         </style>
         
@@ -72,7 +72,7 @@ if not st.session_state.autenticato:
             <div class="login-istruzione">Inserisci il codice di accesso:</div>
     """, unsafe_allow_html=True)
 
-    # Inserimento input e pulsante (dentro il box visivo)
+    # Questi due elementi ora "nasceranno" dentro il box visivo
     codice = st.text_input("", type="password", label_visibility="collapsed").strip()
     
     if st.button("ENTRA"):
@@ -82,7 +82,7 @@ if not st.session_state.autenticato:
         else:
             st.error("Codice errato")
             
-    st.markdown("</div>", unsafe_allow_html=True) # Chiude il div del box
+    st.markdown("</div>", unsafe_allow_html=True) # Qui chiudiamo il box
     st.stop()
     # --- ELEMENTI DELLA PAGINA ---
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
@@ -338,6 +338,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
