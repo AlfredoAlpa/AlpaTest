@@ -76,7 +76,6 @@ def importa_quesiti():
             st.session_state.start_time = time.time()
             st.rerun()
     except Exception as e: st.error(f"Errore: {e}")
-
 def display_pdf(file_path):
     try:
         with open(file_path, "rb") as f:
@@ -122,3 +121,5 @@ else:
         if p_sel:
             st.info(f"📖 Lettura in corso: **{scelta}**")
             display_pdf(p_sel)
+
+           
