@@ -7,24 +7,25 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN PROTETTO: BOX RESTRINTO E PULSANTE CENTRATO ---
+# --- LOGIN PROTETTO: RESTRINGIMENTO ORIZZONTALE ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* 1. Restringiamo il Box a 550px */
+        /* 1. RESTRINGIAMO IN ORIZZONTALE (da 750px a 500px) */
         .login-box-centrale {
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
-            padding: 30px;
-            width: 550px; 
+            padding: 40px;
+            width: 500px; /* Qui abbiamo stretto i fianchi */
             margin: 50px auto !important;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.5);
         }
 
+        /* Titolo: riduciamo leggermente il font perché il box è più stretto */
         .titolo-login {
             color: #FFD700 !important;
             font-size: 2.2rem !important;
@@ -37,44 +38,36 @@ if not st.session_state.autenticato:
             color: #FFFFFF !important;
             font-size: 1.3rem !important;
             font-weight: bold !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 25px !important;
         }
 
-        /* Il campo di testo rimane come lo hai visto, ma lo centriamo nel box */
+        /* Campo di testo centrato nel box stretto */
         div[data-testid="stTextInput"] {
-            width: 90% !important;
+            width: 85% !important;
             margin: 0 auto !important;
         }
 
-        /* 2. CENTRATURA PULSANTE: Forza il posizionamento al centro */
-        div.stButton {
-            text-align: center;
-            width: 100%;
-        }
-        
+        /* 2. PULSANTE CENTRATO */
         div.stButton > button {
-            width: 200px !important; /* Larghezza fissa per non farlo gigante */
+            width: 180px !important; 
             height: 55px !important;
             background-color: #FFD700 !important;
             color: black !important;
             font-size: 1.6rem !important;
             font-weight: bold !important;
             border-radius: 10px !important;
-            margin: 20px auto !important;
-            display: block !important; /* Fondamentale per la centratura */
+            margin: 25px auto !important;
+            display: block !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Apertura del Box
     st.markdown('<div class="login-box-centrale">', unsafe_allow_html=True)
     st.markdown('<div class="titolo-login">🔐 Accesso AlPaTest</div>', unsafe_allow_html=True)
     st.markdown('<div class="istruzione-codice">Inserisci il codice di accesso:</div>', unsafe_allow_html=True)
 
-    # Campo di testo
-    codice = st.text_input("", type="password", label_visibility="collapsed", key="pwd_center").strip()
+    codice = st.text_input("", type="password", label_visibility="collapsed", key="pwd_fixed").strip()
     
-    # Pulsante (ora centrato grazie al display:block e margin:auto)
     if st.button("ENTRA"):
         if codice.lower() in ["open", "studente01"]:
             st.session_state.autenticato = True
@@ -82,7 +75,6 @@ if not st.session_state.autenticato:
         else:
             st.error("Codice errato")
 
-    # Chiusura del Box
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
     # --- ELEMENTI DELLA PAGINA ---
@@ -339,6 +331,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
