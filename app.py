@@ -7,78 +7,76 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN ELASTICO (PC + CELLULARE) ---
+# --- LOGIN ROBUSTO E RESPONSIVE ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        .login-box-centrale {
+        /* 1. CREIAMO LA CORNICE ATTORNO AL BLOCCO VERTICALE */
+        [data-testid="stVerticalBlock"] > div:has(.titolo-box) {
             border: 3px solid #FFD700 !important;
-            border-radius: 20px;
-            padding: 30px !important; /* Padding ridotto per il cellulare */
+            border-radius: 20px !important;
+            padding: 50px 20px !important; /* Spazio interno bilanciato */
+            background-color: rgba(0, 0, 0, 0.5) !important;
             
-            /* TRUCCO PER L'ELASTICITÀ */
-            width: 90% !important;      /* Occupa quasi tutto lo schermo sul telefono */
-            max-width: 550px !important; /* Ma non supera i 550px sul computer */
-            
-            margin: 20px auto !important;
-            text-align: center;
-            background-color: rgba(0, 0, 0, 0.5);
+            /* ELASTICITÀ PER PC E CELLULARE */
+            width: 95% !important;
+            max-width: 550px !important;
+            margin: 40px auto !important;
+            text-align: center !important;
         }
 
-        .testo-box {
+        /* 2. TITOLO E TESTI */
+        .titolo-box {
             color: #FFD700 !important;
-            font-size: clamp(1.5rem, 5vw, 2.5rem) !important; /* Font che si rimpicciolisce sul cell */
+            font-size: clamp(1.5rem, 6vw, 2.2rem) !important; /* Si adatta allo schermo */
             font-weight: 900 !important;
-            display: block;
-            margin-bottom: 15px;
-            /* Impedisce alle lettere di andare a capo una alla volta */
-            white-space: normal !important; 
-            word-wrap: break-word;
+            display: block !important;
+            margin-bottom: 10px !important;
         }
 
         .istruzione-box {
             color: white !important;
             font-size: 1.1rem !important;
-            display: block;
-            margin-bottom: 20px;
+            display: block !important;
+            margin-bottom: 25px !important;
         }
 
-        /* Campo di testo: 70% per dare più spazio alla scrittura sul telefono */
+        /* 3. CAMPO DI TESTO CENTRATO */
         div[data-testid="stTextInput"] {
-            width: 70% !important;
+            width: 80% !important;
             margin: 0 auto !important;
         }
 
-        /* Pulsante centrato e della giusta dimensione */
+        /* 4. PULSANTE ENTRA */
         div.stButton > button {
             width: 160px !important;
             background-color: #FFD700 !important;
             color: black !important;
             font-weight: bold !important;
-            margin: 20px auto !important;
+            margin: 25px auto !important;
             display: block !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-box-centrale">', unsafe_allow_html=True)
-    
-    st.markdown('<span class="testo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
-    st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
+    # USIAMO UN CONTAINER UNICO: Tutto quello che c'è dentro sarà risucchiato
+    with st.container():
+        # Classe 'titolo-box' serve al CSS per capire quale blocco colorare
+        st.markdown('<span class="titolo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
+        st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
+        
+        codice = st.text_input("", type="password", label_visibility="collapsed", key="login_v3").strip()
+        
+        if st.button("ENTRA", key="btn_v3"):
+            if codice.lower() in ["open", "studente01"]:
+                st.session_state.autenticato = True
+                st.rerun()
+            else:
+                st.error("Codice errato")
 
-    codice = st.text_input("", type="password", label_visibility="collapsed", key="login_responsive").strip()
-    
-    if st.button("ENTRA"):
-        if codice.lower() in ["open", "studente01"]:
-            st.session_state.autenticato = True
-            st.rerun()
-        else:
-            st.error("Codice errato")
-
-    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
     # --- ELEMENTI DELLA PAGINA ---
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
@@ -334,6 +332,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
