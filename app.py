@@ -8,35 +8,34 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN PROTETTO E CENTRATO (Passo 1 e 2) ---
+# --- LOGIN PROTETTO: PASSO 1 (ALLARGAMENTO) E PASSO 2 (BOX UNICO) ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* 1. Allarghiamo il Box in orizzontale e verticale */
+        /* 1. Allarghiamo il Box a 700px per far stare il titolo su una riga */
         .login-box-centrale {
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
             padding: 40px;
-            width: 600px; /* Più largo per far stare il titolo su una riga */
+            width: 700px; 
             margin: 50px auto !important;
             text-align: center;
-            background-color: rgba(0, 0, 0, 0.4);
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.7);
         }
 
-        /* Titolo su una riga */
+        /* Titolo: aumentiamo lo spazio orizzontale */
         .login-titolo {
             color: #FFD700 !important;
             font-size: 2.8rem !important;
             font-weight: 900 !important;
-            white-space: nowrap; /* Impedisce alla scritta di andare a capo */
-            margin-bottom: 25px !important;
+            white-space: nowrap !important; /* Forza una riga sola */
+            margin-bottom: 30px !important;
         }
 
-        /* Spazio per la scritta istruzioni */
         .login-istruzione {
             color: #FFFFFF !important;
             font-size: 1.5rem !important;
@@ -44,9 +43,11 @@ if not st.session_state.autenticato:
             margin-bottom: 20px !important;
         }
 
-        /* Centriamo il campo di testo e il pulsante dentro il box */
+        /* 2. Inseriamo i componenti Streamlit dentro il box */
+        /* Forziamo la larghezza dei componenti al 100% del box (non dello schermo!) */
         div[data-testid="stTextInput"], div.stButton {
             width: 100% !important;
+            max-width: 500px !important; /* Impedisce che diventino troppo larghi nel box */
             margin: 0 auto !important;
         }
         
@@ -54,6 +55,7 @@ if not st.session_state.autenticato:
             font-size: 2rem !important;
             height: 65px !important;
             text-align: center !important;
+            border-radius: 10px !important;
         }
 
         div.stButton > button {
@@ -63,7 +65,8 @@ if not st.session_state.autenticato:
             color: black !important;
             font-size: 2rem !important;
             font-weight: bold !important;
-            margin-top: 20px !important;
+            margin-top: 25px !important;
+            border-radius: 10px !important;
         }
         </style>
         
@@ -72,7 +75,7 @@ if not st.session_state.autenticato:
             <div class="login-istruzione">Inserisci il codice di accesso:</div>
     """, unsafe_allow_html=True)
 
-    # Questi due elementi ora "nasceranno" dentro il box visivo
+    # Nota: Questi sono fuori dal markdown ma "catturati" visivamente dal div sopra
     codice = st.text_input("", type="password", label_visibility="collapsed").strip()
     
     if st.button("ENTRA"):
@@ -82,7 +85,7 @@ if not st.session_state.autenticato:
         else:
             st.error("Codice errato")
             
-    st.markdown("</div>", unsafe_allow_html=True) # Qui chiudiamo il box
+    st.markdown("</div>", unsafe_allow_html=True) 
     st.stop()
     # --- ELEMENTI DELLA PAGINA ---
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
@@ -338,6 +341,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
