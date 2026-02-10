@@ -43,7 +43,7 @@ if not st.session_state.autenticato:
 
         /* Campo di testo: lo lasciamo come volevi ma centrato */
         div[data-testid="stTextInput"] {
-            width: 90% !important;
+            width: 50% !important;
             margin: 0 auto !important;
         }
 
@@ -341,6 +341,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
