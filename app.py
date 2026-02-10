@@ -1,3 +1,11 @@
+import streamlit as st
+import pandas as pd
+import os
+import time
+from fpdf import FPDF
+
+# Configurazione pagina
+st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # --- LOGIN PROTETTO: BOX RESTRINTO E PULSANTE CENTRATO ---
 if 'autenticato' not in st.session_state:
@@ -331,6 +339,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
