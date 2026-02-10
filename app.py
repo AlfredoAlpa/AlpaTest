@@ -19,7 +19,7 @@ if not st.session_state.autenticato:
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
             padding: 100px;
-            width: 700px; /* Qui stringiamo i fianchi */
+            width: 600px; /* Qui stringiamo i fianchi */
             margin: 50px auto !important;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.5);
@@ -341,6 +341,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
