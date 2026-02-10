@@ -1,91 +1,81 @@
 
-import streamlit as st
-import pandas as pd
-import os
-import time
-from fpdf import FPDF
-
-# Configurazione pagina
-st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
-
-# --- LOGIN PROTETTO: PASSO 1 (ALLARGAMENTO) E PASSO 2 (BOX UNICO) ---
+# --- LOGIN PROTETTO: BOX RESTRINTO E PULSANTE CENTRATO ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* 1. Allarghiamo il Box a 700px per far stare il titolo su una riga */
+        /* 1. Restringiamo il Box a 550px */
         .login-box-centrale {
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
-            padding: 40px;
-            width: 700px; 
+            padding: 30px;
+            width: 550px; 
             margin: 50px auto !important;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.5);
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.7);
         }
 
-        /* Titolo: aumentiamo lo spazio orizzontale */
-        .login-titolo {
+        .titolo-login {
             color: #FFD700 !important;
-            font-size: 2.8rem !important;
+            font-size: 2.2rem !important;
             font-weight: 900 !important;
-            white-space: nowrap !important; /* Forza una riga sola */
-            margin-bottom: 30px !important;
+            white-space: nowrap !important;
+            margin-bottom: 20px !important;
         }
 
-        .login-istruzione {
+        .istruzione-codice {
             color: #FFFFFF !important;
-            font-size: 1.5rem !important;
+            font-size: 1.3rem !important;
             font-weight: bold !important;
             margin-bottom: 20px !important;
         }
 
-        /* 2. Inseriamo i componenti Streamlit dentro il box */
-        /* Forziamo la larghezza dei componenti al 100% del box (non dello schermo!) */
-        div[data-testid="stTextInput"], div.stButton {
-            width: 100% !important;
-            max-width: 500px !important; /* Impedisce che diventino troppo larghi nel box */
+        /* Il campo di testo rimane come lo hai visto, ma lo centriamo nel box */
+        div[data-testid="stTextInput"] {
+            width: 90% !important;
             margin: 0 auto !important;
         }
-        
-        div[data-testid="stTextInput"] input {
-            font-size: 2rem !important;
-            height: 65px !important;
-            text-align: center !important;
-            border-radius: 10px !important;
-        }
 
+        /* 2. CENTRATURA PULSANTE: Forza il posizionamento al centro */
+        div.stButton {
+            text-align: center;
+            width: 100%;
+        }
+        
         div.stButton > button {
-            width: 100% !important;
-            height: 65px !important;
+            width: 200px !important; /* Larghezza fissa per non farlo gigante */
+            height: 55px !important;
             background-color: #FFD700 !important;
             color: black !important;
-            font-size: 2rem !important;
+            font-size: 1.6rem !important;
             font-weight: bold !important;
-            margin-top: 25px !important;
             border-radius: 10px !important;
+            margin: 20px auto !important;
+            display: block !important; /* Fondamentale per la centratura */
         }
         </style>
-        
-        <div class="login-box-centrale">
-            <div class="login-titolo">🔐 Accesso AlPaTest</div>
-            <div class="login-istruzione">Inserisci il codice di accesso:</div>
     """, unsafe_allow_html=True)
 
-    # Nota: Questi sono fuori dal markdown ma "catturati" visivamente dal div sopra
-    codice = st.text_input("", type="password", label_visibility="collapsed").strip()
+    # Apertura del Box
+    st.markdown('<div class="login-box-centrale">', unsafe_allow_html=True)
+    st.markdown('<div class="titolo-login">🔐 Accesso AlPaTest</div>', unsafe_allow_html=True)
+    st.markdown('<div class="istruzione-codice">Inserisci il codice di accesso:</div>', unsafe_allow_html=True)
+
+    # Campo di testo
+    codice = st.text_input("", type="password", label_visibility="collapsed", key="pwd_center").strip()
     
+    # Pulsante (ora centrato grazie al display:block e margin:auto)
     if st.button("ENTRA"):
         if codice.lower() in ["open", "studente01"]:
             st.session_state.autenticato = True
             st.rerun()
         else:
             st.error("Codice errato")
-            
-    st.markdown("</div>", unsafe_allow_html=True) 
+
+    # Chiusura del Box
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
     # --- ELEMENTI DELLA PAGINA ---
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
@@ -341,6 +331,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
