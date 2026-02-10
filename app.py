@@ -8,62 +8,82 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN ---
-# Inizializzazione variabile di stato (necessaria per non avere l'errore)
+# --- LOGIN PROTETTO E CENTRATO ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
-    # --- STILE SPECIFICO PER CENTRARE TUTTA LA LOGIN ---
     st.markdown("""
         <style>
-        /* 1. Centra il titolo */
-        .centered-title {
+        /* 1. Il Box contenitore */
+        .login-box-centrale {
+            border: 3px solid #FFD700 !important;
+            border-radius: 20px;
+            padding: 40px;
+            width: 500px;
+            margin: 50px auto !important;
             text-align: center;
-            color: #FFD700;
-            font-size: 3.5rem;
-            font-weight: bold;
-            margin-bottom: 2rem;
-        }
-        
-        /* 2. Centra e dimensiona la casella di testo */
-        div[data-testid="stTextInput"] {
-            width: 450px !important;
-            margin: 0 auto !important;
-        }
-        
-        /* 3. Altezza cella e font del codice inserito */
-        div[data-testid="stTextInput"] input {
-            height: 70px !important;
-            font-size: 2.5rem !important;
-            text-align: center !important;
+            background-color: rgba(0, 0, 0, 0.4);
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* 4. Centra e ingrandisce l'etichetta "Inserisci codice" */
-        div[data-testid="stTextInput"] label {
-            display: flex !important;
-            justify-content: center !important;
-            margin-bottom: 10px !important;
-        }
-        div[data-testid="stTextInput"] label p {
-            font-size: 1.6rem !important;
+        /* 2. Il Titolo dentro il box */
+        .login-titolo {
             color: #FFD700 !important;
-            font-weight: bold !important;
+            font-size: 2.5rem !important;
+            font-weight: 900 !important;
+            margin-bottom: 25px !important;
+            font-family: sans-serif;
         }
 
-        /* 5. Centra e ingrandisce il pulsante 'Entra' */
-        div.stButton > button {
-            display: block !important;
-            margin: 40px auto !important;
-            width: 300px !important;
+        /* 3. La scritta 'Inserisci codice' */
+        .login-istruzione {
+            color: #FFFFFF !important;
+            font-size: 1.3rem !important;
+            font-weight: bold !important;
+            margin-bottom: 15px !important;
+        }
+
+        /* 4. La casella di testo (solo questa!) */
+        div[data-testid="stTextInput"] > div > div > input {
+            font-size: 2rem !important;
             height: 60px !important;
-            font-size: 1.8rem !important;
+            text-align: center !important;
+            font-weight: bold !important;
+            color: #000000 !important;
+        }
+
+        /* 5. Il pulsante ENTRA (solo questo!) */
+        .stButton > button {
+            width: 100% !important;
+            height: 60px !important;
             background-color: #FFD700 !important;
-            color: black !important;
+            color: #000000 !important;
+            font-size: 1.8rem !important;
+            font-weight: 900 !important;
+            border-radius: 10px !important;
+            margin-top: 20px !important;
+            border: none !important;
         }
         </style>
+        
+        <div class="login-box-centrale">
+            <div class="login-titolo">🔐 Accesso AlPaTest</div>
+            <div class="login-istruzione">Inserisci il codice di accesso:</div>
     """, unsafe_allow_html=True)
 
+    # Inserimento input e pulsante (dentro il box visivo)
+    codice = st.text_input("", type="password", label_visibility="collapsed").strip()
+    
+    if st.button("ENTRA"):
+        if codice.lower() in ["open", "studente01"]:
+            st.session_state.autenticato = True
+            st.rerun()
+        else:
+            st.error("Codice errato")
+            
+    st.markdown("</div>", unsafe_allow_html=True) # Chiude il div del box
+    st.stop()
     # --- ELEMENTI DELLA PAGINA ---
     st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
     
@@ -318,5 +338,6 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
