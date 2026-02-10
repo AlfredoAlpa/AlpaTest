@@ -69,31 +69,32 @@ def importa_quesiti():
             st.rerun()
     except Exception as e: st.error(f"Errore: {e}")
 
-# --- NUOVA FUNZIONE PDF ANTI-BLOCCO ---
 def display_pdf(file_path):
     try:
         with open(file_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-        pdf_url = f"data:application/pdf;base64,{base64_pdf}"
+            pdf_data = f.read()
+            base64_pdf = base64.b64encode(pdf_data).decode('utf-8')
         
-        # Anteprima (tag object)
-        pdf_display = f'<object data="{pdf_url}" type="application/pdf" width="100%" height="800px"> ' \
-                      f'<p>Browser limitato. Usa il tasto sotto.</p></object>'
+        # Anteprima Tecnica
+        pdf_display = f"""
+            <div style="border: 2px solid #FFD700; border-radius: 10px; overflow: hidden; background-color: white;">
+                <embed src="data:application/pdf;base64,{base64_pdf}" 
+                       width="100%" height="700px" 
+                       type="application/pdf">
+            </div>
+        """
         st.markdown(pdf_display, unsafe_allow_html=True)
         
-        # Pulsante di emergenza dorato
-        st.markdown(f"""
-            <div style="text-align: center; margin-top: 10px;">
-                <a href="{pdf_url}" target="_blank" style="
-                    text-decoration: none; background-color: #FFD700; color: black;
-                    padding: 12px 25px; border-radius: 8px; font-weight: bold;
-                    display: inline-block; border: 2px solid black;
-                ">🔓 APRI PDF A TUTTO SCHERMO</a>
-                <p style='color: #FFD700; font-size: 0.9rem; margin-top: 5px;'>
-                (Clicca qui se il riquadro sopra appare bianco)</p>
-            </div>
-        """, unsafe_allow_html=True)
-    except Exception as e: st.error(f"Errore tecnico: {e}")
+        # Pulsante di Download (Sempre funzionante anche se Chrome blocca l'anteprima)
+        st.write("---")
+        st.download_button(
+            label="📥 SCARICA E LEGGI DISPENSA (Se l'anteprima sopra è grigia)",
+            data=pdf_data,
+            file_name=os.path.basename(file_path),
+            mime="application/pdf",
+            use_container_width=True
+        )
+    except Exception as e: st.error(f"Errore caricamento PDF: {e}")
 
 @st.fragment(run_every=1)
 def mostra_timer():
@@ -139,7 +140,6 @@ if st.session_state.vista == "TEST":
             for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
                 st.write(f"**{testo}**")
                 c1, c2 = st.columns(2)
-                # Salvataggio diretto in session_state tramite key univoca
                 st.text_input("Da", key=f"key_da_{i}", label_visibility="collapsed")
                 st.text_input("A", key=f"key_a_{i}", label_visibility="collapsed")
         st.checkbox("Simulazione", key="simulazione")
