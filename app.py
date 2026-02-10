@@ -7,72 +7,72 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN PROTETTO: BOX INTEGRATO ---
+# --- LOGIN PROTETTO: BOX UNICO INTEGRATO ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
+    # 1. Stili isolati per non toccare altre pagine
     st.markdown("""
         <style>
-        .login-box-totale {
+        /* Allarghiamo il box per far stare il titolo su una riga */
+        .main-login-container {
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
             padding: 40px;
-            width: 750px;
+            width: 750px; /* Più largo per sicurezza */
             margin: 50px auto !important;
             background-color: rgba(0, 0, 0, 0.5);
             text-align: center;
         }
-        .titolo-login {
+        .titolo-unico {
             color: #FFD700 !important;
             font-size: 3rem !important;
             font-weight: 900 !important;
-            margin-bottom: 10px !important;
+            white-space: nowrap !important;
+            margin-bottom: 20px;
         }
-        .sottotitolo-login {
+        .istruzione-testo {
             color: #FFFFFF !important;
             font-size: 1.5rem !important;
             font-weight: bold !important;
-            margin-bottom: 30px !important;
+            margin-bottom: 25px;
         }
-        /* Centriamo i componenti Streamlit */
+        /* Centriamo gli elementi Streamlit dentro il box */
         div[data-testid="stTextInput"] {
-            width: 70% !important;
+            width: 80% !important;
             margin: 0 auto !important;
         }
         div.stButton > button {
-            width: 70% !important;
+            width: 80% !important;
             margin: 20px auto !important;
             height: 60px !important;
             background-color: #FFD700 !important;
             color: black !important;
-            font-size: 2rem !important;
+            font-size: 1.8rem !important;
             font-weight: bold !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # CREIAMO IL BOX CHE CONTIENE TUTTO
-    # Apriamo il contenitore visivo
-    st.markdown('<div class="login-box-totale">', unsafe_allow_html=True)
-    
-    # Scriviamo i testi dentro il box
-    st.markdown('<div class="titolo-login">🔐 Accesso AlPaTest</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sottotitolo-login">Inserisci il codice di accesso:</div>', unsafe_allow_html=True)
-    
-    # Inseriamo il campo di testo (ora finirà dentro il div sopra)
-    codice = st.text_input("", type="password", label_visibility="collapsed", key="pwd").strip()
-    
-    # Inseriamo il pulsante (anche questo finirà dentro)
-    if st.button("ENTRA"):
-        if codice.lower() in ["open", "studente01"]:
-            st.session_state.autenticato = True
-            st.rerun()
-        else:
-            st.error("Codice errato")
-
-    # Chiudiamo il contenitore visivo (il muro del box si chiude qui, alla fine di tutto)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # 2. Creiamo il box "fisico" che contiene tutto
+    with st.container():
+        st.markdown('<div class="main-login-container">', unsafe_allow_html=True)
+        
+        st.markdown('<div class="titolo-unico">🔐 Accesso AlPaTest</div>', unsafe_allow_html=True)
+        st.markdown('<div class="istruzione-testo">Inserisci il codice di accesso:</div>', unsafe_allow_html=True)
+        
+        # Ora il campo e il pulsante sono "figli" del container
+        codice = st.text_input("", type="password", label_visibility="collapsed", key="input_login").strip()
+        
+        if st.button("ENTRA", key="btn_login"):
+            if codice.lower() in ["open", "studente01"]:
+                st.session_state.autenticato = True
+                st.rerun()
+            else:
+                st.error("Codice errato")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     st.stop()
     # --- ELEMENTI DELLA PAGINA ---
@@ -329,6 +329,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
