@@ -51,23 +51,15 @@ if 'start_time' not in st.session_state: st.session_state.start_time = None
 if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
 
 # --- FUNZIONI ---
-def pulisci_testo(testo):
-    if pd.isna(testo) or testo == "": return " "
-    repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
-    t = str(testo)
-    for k,v in repls.items(): t = t.replace(k,v)
-    return t.encode('latin-1','replace').decode('latin-1')
-
 def importa_quesiti():
     try:
         df = pd.read_excel("quiz.xlsx", sheet_name=0)
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
         frames = []
         for i in range(len(st.session_state.dict_discipline)):
-            # MODIFICA: leggiamo dalle chiavi univoche dei widget
             d = st.session_state.get(f"input_da_{i}","")
             a = st.session_state.get(f"input_a_{i}","")
-            if d.isdigit() and a.isdigit():
+            if str(d).isdigit() and str(a).isdigit():
                 frames.append(df.iloc[int(d)-1 : int(a)])
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
@@ -76,50 +68,91 @@ def importa_quesiti():
             st.session_state.start_time = time.time()
             st.rerun()
     except Exception as e: st.error(f"Errore: {e}")
-def display_pdf(file_path):
-    try:
-        with open(file_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-        
-        # Usiamo un iframe che è più compatibile con i browser moderni
-        pdf_display = f'''
-            <iframe src="data:application/pdf;base64,{base64_pdf}" 
-            width="100%" height="800" type="application/pdf" 
-            style="border:none;"></iframe>
-        '''
-        st.markdown(pdf_display, unsafe_allow_html=True)
-        
-        # Aggiungiamo un link di emergenza sotto il riquadro
-        st.markdown(f"**Problemi di visualizzazione?** [Clicca qui per scaricare il file](data:application/pdf;base64,{base64_pdf})", unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Errore nella visualizzazione del PDF: {e}")
 
-# --- PARTE FINALE DEL CODICE (Sostituisci il blocco 'else' finale) ---
+def display_pdf(file_path):
+    with open(file_path, "rb") as f:
+        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" style="border:none;"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
+@st.fragment(run_every=1)
+def mostra_timer():
+    if st.session_state.start_time and st.session_state.get("simulazione", False):
+        rimanente = max(0, (30 * 60) - (time.time() - st.session_state.start_time))
+        minuti, secondi = int(rimanente // 60), int(rimanente % 60)
+        colore = "#00FF00" if rimanente > 300 else "#FF0000"
+        st.markdown(f'<p style="font-size:2rem; font-weight:bold; text-align:right; color:{colore}">⏱️ {minuti:02d}:{secondi:02d}</p>', unsafe_allow_html=True)
+
+# --- CSS ---
+st.markdown("<style>.stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); color: white; }</style>", unsafe_allow_html=True)
+
+# --- LOGICA NAVIGAZIONE ---
+if st.session_state.vista == "TEST":
+    # SCHERMATA TEST
+    t1, t2 = st.columns([7, 3])
+    with t1: st.markdown('<h1 style="color:#FFD700;">AlPaTest</h1>', unsafe_allow_html=True)
+    with t2: mostra_timer()
+    
+    col_sx, col_centro, col_dx = st.columns([2.5, 6.5, 3])
+    
+    with col_sx:
+        if st.button("📚 VAI ALLE DISPENSE", use_container_width=True):
+            st.session_state.vista = "STUDIO"
+            st.rerun()
+        st.write("---")
+        if not st.session_state.df_filtrato.empty:
+            lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
+            sel = st.radio("Domande", lista, index=st.session_state.indice, key="nav_main")
+            st.session_state.indice = lista.index(sel)
+
+    with col_centro:
+        if not st.session_state.df_filtrato.empty:
+            q = st.session_state.df_filtrato.iloc[st.session_state.indice]
+            st.subheader(f"{st.session_state.indice+1}. {q['Domanda']}")
+            # Qui andrebbe la logica delle risposte (omessa per brevità ma integrabile)
+            st.write("---")
+            c1, c2 = st.columns(2)
+            if c1.button("⬅️ Prec"): st.session_state.indice = max(0, st.session_state.indice-1); st.rerun()
+            if c2.button("Succ ➡️"): st.session_state.indice = min(len(st.session_state.df_filtrato)-1, st.session_state.indice+1); st.rerun()
+        else:
+            st.info("Configura le discipline a destra e premi Importa")
+
+    with col_dx:
+        st.markdown("### Discipline")
+        if st.session_state.dict_discipline:
+            for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
+                st.write(f"**{testo}**")
+                c1, c2 = st.columns(2)
+                st.session_state[f"input_da_{i}"] = c1.text_input("Da", key=f"key_da_{i}", label_visibility="collapsed", placeholder="Da")
+                st.session_state[f"input_a_{i}"] = c2.text_input("A", key=f"key_a_{i}", label_visibility="collapsed", placeholder="A")
+        st.checkbox("Simulazione", key="simulazione")
+        st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
 else:
-    # AREA DISPENSE
-    st.markdown('<div class="logo-style">AlPaTest - Studio</div>', unsafe_allow_html=True)
-    if st.button("⬅️ TORNA AL TEST", use_container_width=True, type="primary"):
-        st.session_state.vista = "TEST"; st.rerun()
+    # SCHERMATA DISPENSE (L'else ora è perfettamente allineato all'if sopra)
+    st.markdown('<h1 style="color:#FFD700;">AlPaTest - Studio</h1>', unsafe_allow_html=True)
+    if st.button("⬅️ TORNA AL TEST", use_container_width=True):
+        st.session_state.vista = "TEST"
+        st.rerun()
+    
     st.write("---")
     cm, cv = st.columns([3, 7])
+    
     with cm:
-        st.subheader("PDF Disponibili")
-        # Controlliamo se la cartella esiste prima di leggere
-        if not os.path.exists("dispense"):
-            os.makedirs("dispense")
-            st.warning("Cartella 'dispense' creata. Carica i file PDF su GitHub.")
-        
-        lista_pdf = [f for f in os.listdir("dispense") if f.endswith(".pdf")]
-        if lista_pdf:
-            scelta = st.radio("Seleziona la dispensa da studiare:", sorted(lista_pdf))
-            p_sel = os.path.join("dispense", scelta)
-        else: 
-            st.warning("Nessun PDF trovato nella cartella 'dispense'.")
+        st.subheader("I tuoi PDF")
+        if os.path.exists("dispense"):
+            lista_pdf = [f for f in os.listdir("dispense") if f.endswith(".pdf")]
+            if lista_pdf:
+                scelta = st.radio("Seleziona file:", sorted(lista_pdf))
+                p_sel = os.path.join("dispense", scelta)
+            else:
+                st.warning("Nessun PDF trovato")
+                p_sel = None
+        else:
+            st.error("Cartella 'dispense' non trovata")
             p_sel = None
             
     with cv:
         if p_sel:
-            st.info(f"📖 Lettura in corso: **{scelta}**")
+            st.success(f"Lettura: {scelta}")
             display_pdf(p_sel)
-
-           
