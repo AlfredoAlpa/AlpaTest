@@ -7,80 +7,67 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN PROTETTO: TUTTO DENTRO E CENTRATO ---
+# --- LOGIN CON EFFETTO "RISUCCHIO" ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* Il tuo Box personalizzato */
         .login-box-centrale {
             border: 3px solid #FFD700 !important;
             border-radius: 20px;
-            padding: 100px !important; /* Il tuo valore */
-            width: 600px !important;    /* Il tuo valore */
+            padding: 100px !important; /* Il tuo valore: crea lo spazio verticale */
+            width: 600px !important;   /* Il tuo valore: larghezza box */
             margin: 50px auto !important;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.5);
         }
 
-        /* Titolo e Istruzioni: forziamo la centratura */
-        .testo-box {
+        /* Stile per i testi dentro il box */
+        .testo-interno {
             color: #FFD700 !important;
-            font-size: 2.5rem !important;
+            font-size: 2.2rem !important;
             font-weight: 900 !important;
+            margin-bottom: 10px !important;
+            display: block;
+        }
+        .sottotitolo-interno {
+            color: white !important;
+            font-size: 1.2rem !important;
             margin-bottom: 20px !important;
             display: block;
-            text-align: center;
-        }
-        
-        .istruzione-box {
-            color: #FFFFFF !important;
-            font-size: 1.3rem !important;
-            font-weight: bold !important;
-            margin-bottom: 30px !important;
-            display: block;
-            text-align: center;
         }
 
         /* Il tuo campo di testo al 50% centrato */
         div[data-testid="stTextInput"] {
-            width: 50% !important; 
+            width: 50% !important;
             margin: 0 auto !important;
         }
 
         /* Centratura del pulsante ENTRA */
-        div.stButton {
-            text-align: center;
-            margin-top: 30px;
-        }
-        
         div.stButton > button {
-            width: 180px !important;
-            height: 55px !important;
+            width: 150px !important;
             background-color: #FFD700 !important;
             color: black !important;
             font-weight: bold !important;
-            font-size: 1.5rem !important;
-            border-radius: 10px !important;
+            margin: 20px auto !important;
+            display: block !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- APERTURA BOX: Tutto quello che segue starà dentro la cornice gialla ---
+    # 1. APRIAMO IL BOX (Il "risucchio" inizia qui)
     st.markdown('<div class="login-box-centrale">', unsafe_allow_html=True)
     
-    # 1. Titolo (ora DENTRO)
-    st.markdown('<span class="testo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
-    
-    # 2. Istruzione (ora DENTRO e sopra l'input)
-    st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
+    # 2. METTIAMO I TESTI DENTRO
+    st.markdown('<span class="testo-interno">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
+    st.markdown('<span class="sottotitolo-interno">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
 
-    # 3. Campo di testo (al 50%)
-    codice = st.text_input("", type="password", label_visibility="collapsed", key="login_final").strip()
+    # 3. METTIAMO IL CAMPO DI TESTO DENTRO
+    codice = st.text_input("", type="password", label_visibility="collapsed", key="login_box_in").strip()
     
-    # 4. Pulsante (centrato)
+    # 4. METTIAMO IL PULSANTE DENTRO
     if st.button("ENTRA"):
         if codice.lower() in ["open", "studente01"]:
             st.session_state.autenticato = True
@@ -88,7 +75,7 @@ if not st.session_state.autenticato:
         else:
             st.error("Codice errato")
 
-    # --- CHIUSURA BOX ---
+    # 5. CHIUDIAMO IL BOX (Il muro finale che impedisce la fuga)
     st.markdown('</div>', unsafe_allow_html=True)
     
     st.stop()
@@ -346,6 +333,7 @@ with col_dx:
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+
 
 
 
