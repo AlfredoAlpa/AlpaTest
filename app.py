@@ -8,6 +8,10 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
+# URL del tuo Google Sheets (formato export CSV per lettura immediata)
+SHEET_ID = "1WjRbERt91YEr4zVr5ZuRdmlJ85CmHreHHRrlMkyv8zs"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Dispense_online"
+
 # --- LOGIN ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
@@ -56,7 +60,8 @@ st.markdown("""
 
 # --- INIZIALIZZAZIONE ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
-if 'pdf_selezionato' not in st.session_state: st.session_state.pdf_selezionato = None
+if 'pdf_id_selezionato' not in st.session_state: st.session_state.pdf_id_selezionato = None
+if 'pdf_titolo_selezionato' not in st.session_state: st.session_state.pdf_titolo_selezionato = None
 
 if 'dict_discipline' not in st.session_state:
     try:
@@ -77,24 +82,10 @@ if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 
 # --- FUNZIONI ---
-def display_pdf_safe(file_path):
-    """Visualizzatore che usa l'oggetto per massima compatibilità"""
-    with open(file_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    
-    pdf_display = f'''
-        <object data="data:application/pdf;base64,{base64_pdf}#toolbar=1" type="application/pdf" width="100%" height="850px">
-            <div style="background:white; color:black; padding:30px; text-align:center; border-radius:10px;">
-                <h4>Visualizzazione non supportata direttamente</h4>
-                <p>Chrome ha bloccato l'anteprima. Clicca qui sotto per leggere:</p>
-                <a href="data:application/pdf;base64,{base64_pdf}" download="dispensa.pdf" 
-                   style="background-color:#FFD700; color:black; padding:10px 20px; text-decoration:none; font-weight:bold; border-radius:5px;">
-                   ⬇️ APRI DISPENSA
-                </a>
-            </div>
-        </object>
-    '''
-    st.markdown(pdf_display, unsafe_allow_html=True)
+def display_google_pdf(file_id):
+    """Visualizzatore Google Drive con Iframe (Anti-Blocco)"""
+    url = f"https://drive.google.com/file/d/{file_id}/preview"
+    st.markdown(f'<iframe src="{url}" width="100%" height="800" style="border:none; background:white;"></iframe>', unsafe_allow_html=True)
 
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
@@ -171,33 +162,37 @@ with col_sx:
         cod_immesso = st.text_input("Codice + INVIO:", key="cod_dispensa", type="password").strip()
         if cod_immesso != "" and cod_immesso in st.session_state.codici_dispense:
             st.success("Sbloccato!")
-            cartella = "static" if os.path.exists("static") else "dispense"
-            if os.path.exists(cartella):
-                files = [f for f in os.listdir(cartella) if f.endswith(".pdf")]
-                files.sort()
-                scelta = st.selectbox("Seleziona dispensa:", ["-- Scegli --"] + files, key="select_pdf")
+            try:
+                # Carica elenco dispense da Google Sheets
+                df_online = pd.read_csv(SHEET_URL)
+                # Pulisce i nomi delle colonne (toglie spazi extra)
+                df_online.columns = [c.strip() for c in df_online.columns]
+                
+                dispense_nomi = df_online["Titolo Dispensa"].tolist()
+                scelta = st.selectbox("Seleziona dispensa:", ["-- Scegli --"] + dispense_nomi, key="select_pdf_online")
+                
                 if scelta != "-- Scegli --":
+                    row = df_online[df_online["Titolo Dispensa"] == scelta].iloc[0]
                     if st.button("📖 LEGGI ORA", use_container_width=True):
-                        st.session_state.pdf_selezionato = scelta
+                        st.session_state.pdf_id_selezionato = str(row["ID_Drive"]).strip()
+                        st.session_state.pdf_titolo_selezionato = scelta
                         st.rerun()
-                    with open(os.path.join(cartella, scelta), "rb") as f:
-                        st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, key=f"dl_{scelta}", use_container_width=True)
+            except Exception as e:
+                st.error("Errore nel caricamento del foglio Google. Verifica di averlo 'Pubblicato sul Web'.")
         elif cod_immesso != "": st.error("Codice errato")
 
 with col_centro:
-    if st.session_state.pdf_selezionato:
-        st.markdown(f"### 📖 Studio: {st.session_state.pdf_selezionato}")
+    # SEZIONE LETTURA PDF (Google Drive Iframe)
+    if st.session_state.pdf_id_selezionato:
+        st.markdown(f"### 📖 Studio: {st.session_state.pdf_titolo_selezionato}")
         if st.button("🔙 CHIUDI E TORNA AL QUIZ", type="primary"):
-            st.session_state.pdf_selezionato = None
+            st.session_state.pdf_id_selezionato = None
+            st.session_state.pdf_titolo_selezionato = None
             st.rerun()
         
-        cartella = "static" if os.path.exists("static") else "dispense"
-        percorso_pdf = os.path.join(cartella, st.session_state.pdf_selezionato)
-        if os.path.exists(percorso_pdf):
-            display_pdf_safe(percorso_pdf)
-        else:
-            st.error("File non trovato.")
+        display_google_pdf(st.session_state.pdf_id_selezionato)
     
+    # SEZIONE QUIZ
     elif not st.session_state.df_filtrato.empty:
         q = st.session_state.df_filtrato.iloc[st.session_state.indice]
         st.markdown(f'<div class="quesito-style">{st.session_state.indice + 1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
