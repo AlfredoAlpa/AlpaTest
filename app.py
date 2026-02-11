@@ -8,8 +8,8 @@ from fpdf import FPDF
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # Parametri Google Sheets (Il tuo foglio specifico)
+# Usiamo l'export CSV con gid=0 per puntare sempre al primo foglio a sinistra
 SHEET_ID = "1WjRbERt91YEr4zVr5ZuRdmlJ85CmHreHHRrlMkyv8zs"
-# Usiamo gid=0 per essere sicuri di prendere il primo foglio indipendentemente dal nome
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
 
 # --- LOGIN ---
@@ -131,23 +131,29 @@ with col_sx:
         cod_immesso = st.text_input("Codice Sblocco:", type="password", key="lock").strip()
         if cod_immesso in codici_dispense and cod_immesso != "":
             try:
-                # Lettura remota da Google Sheets
+                # Lettura remota forzata dal primo foglio
                 df_online = pd.read_csv(SHEET_URL)
-                df_online.columns = [str(c).strip() for c in df_online.columns]
                 
-                # Usa gli indici delle colonne (1 per titolo, 2 per ID) per massima sicurezza
-                titoli = df_online.iloc[:, 1].dropna().tolist()
-                scelta = st.selectbox("Scegli dispensa:", ["-- Seleziona --"] + titoli)
-                
-                if scelta != "-- Seleziona --":
-                    # Estrae l'ID corrispondente
-                    raw_id = str(df_online[df_online.iloc[:, 1] == scelta].iloc[0, 2]).strip()
-                    if st.button("📖 APRI DISPENSA", use_container_width=True):
-                        st.session_state.pdf_id_selezionato = raw_id
-                        st.session_state.pdf_titolo_selezionato = scelta
-                        st.rerun()
-            except:
-                st.error("Errore di collegamento al database dispense.")
+                # Se il foglio ha meno di 3 colonne avvisiamo l'utente
+                if df_online.shape[1] < 3:
+                    st.error("Il foglio Google deve avere almeno 3 colonne (A, B, C).")
+                else:
+                    # Usiamo gli indici fisici delle colonne: [1] è Titolo, [2] è ID_Drive
+                    titoli = df_online.iloc[:, 1].dropna().tolist()
+                    scelta = st.selectbox("Scegli dispensa:", ["-- Seleziona --"] + titoli)
+                    
+                    if scelta != "-- Seleziona --":
+                        # Troviamo l'ID nella riga corrispondente alla colonna Titolo
+                        riga_dati = df_online[df_online.iloc[:, 1] == scelta]
+                        raw_id = str(riga_dati.iloc[0, 2]).strip()
+                        
+                        if st.button("📖 APRI DISPENSA", use_container_width=True):
+                            st.session_state.pdf_id_selezionato = raw_id
+                            st.session_state.pdf_titolo_selezionato = scelta
+                            st.rerun()
+            except Exception as e:
+                # Mostra l'errore tecnico specifico per debug
+                st.error(f"Errore tecnico nel database: {e}")
         elif cod_immesso != "":
             st.error("Codice non valido")
 
