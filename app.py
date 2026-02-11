@@ -77,21 +77,24 @@ if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 
 # --- FUNZIONI ---
-def display_pdf(file_path):
-    """Visualizzatore PDF con fallback per Chrome"""
+def display_pdf_safe(file_path, file_name):
+    """Crea un link sicuro per aprire il PDF in una nuova scheda"""
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
     
-    # Utilizziamo l'oggetto <embed> che Chrome gestisce meglio per i PDF in base64
-    pdf_display = f'''
-        <embed
-            src="data:application/pdf;base64,{base64_pdf}"
-            width="100%"
-            height="800"
-            type="application/pdf"
-        >
+    href = f'''
+        <div style="text-align:center; background:rgba(255,215,0,0.05); padding:30px; border-radius:15px; border:1px solid #FFD700; margin:20px 0;">
+            <h3 style="color:white; margin-bottom:10px;">📄 {file_name}</h3>
+            <p style="color:#CCC; font-size:1rem; margin-bottom:20px;">Il file è pronto per la consultazione.</p>
+            <a href="data:application/pdf;base64,{base64_pdf}" target="_blank" 
+               style="text-decoration:none; background-color:#FFD700; color:black; padding:12px 25px; 
+                      border-radius:8px; font-weight:bold; font-size:1.1rem; display:inline-block;">
+               🚀 APRI DISPENSA A TUTTO SCHERMO
+            </a>
+            <p style="color:#888; font-size:0.8rem; margin-top:15px;">(Cliccando il tasto, la dispensa si aprirà in una nuova scheda del browser senza blocchi)</p>
+        </div>
     '''
-    st.markdown(pdf_display, unsafe_allow_html=True)
+    st.markdown(href, unsafe_allow_html=True)
 
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
@@ -113,7 +116,7 @@ def calcola_risultati():
 def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
-    lu = 100
+    lu = 100 # LARGHEZZA UTILE ALFREDO3
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(lu, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     for i, row in st.session_state.df_filtrato.iterrows():
@@ -162,9 +165,6 @@ with col_sx:
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
             sel = st.radio("L", lista, index=st.session_state.indice, key=f"n_{st.session_state.indice}", label_visibility="collapsed")
             st.session_state.indice = lista.index(sel)
-            # Se l'utente clicca su una domanda, il PDF si chiude
-            if st.button("Vai alla domanda", use_container_width=True):
-                 st.session_state.pdf_selezionato = None
     
     st.write("---")
     with st.expander("📚 DISPENSE DI STUDIO", expanded=True):
@@ -178,22 +178,22 @@ with col_sx:
                 if scelta != "-- Scegli --":
                     if st.button("📖 LEGGI ORA", use_container_width=True):
                         st.session_state.pdf_selezionato = scelta
-                        st.rerun() # Forza il ricaricamento per mostrare il PDF
+                        st.rerun()
                     with open(os.path.join("dispense", scelta), "rb") as f:
                         st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, use_container_width=True)
         elif cod_immesso != "": st.error("Codice errato")
 
 with col_centro:
-    # SEZIONE LETTURA PDF
+    # SEZIONE LETTURA PDF (ANTI-BLOCCO)
     if st.session_state.pdf_selezionato:
-        st.markdown(f"### 📖 Lettura: {st.session_state.pdf_selezionato}")
+        st.markdown(f"### 📖 Studio: {st.session_state.pdf_selezionato}")
         if st.button("🔙 CHIUDI E TORNA AL QUIZ", type="primary"):
             st.session_state.pdf_selezionato = None
             st.rerun()
         
         percorso_pdf = os.path.join("dispense", st.session_state.pdf_selezionato)
         if os.path.exists(percorso_pdf):
-            display_pdf(percorso_pdf)
+            display_pdf_safe(percorso_pdf, st.session_state.pdf_selezionato)
         else:
             st.error("File non trovato.")
     
