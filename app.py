@@ -7,7 +7,7 @@ from fpdf import FPDF
 # Configurazione pagina
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN ROBUSTO E RESPONSIVE ---
+# --- LOGIN ROBUSTO ---
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
@@ -24,28 +24,9 @@ if not st.session_state.autenticato:
             margin: 40px auto !important;
             text-align: center !important;
         }
-        .titolo-box {
-            color: #FFD700 !important;
-            font-size: clamp(1.6rem, 7vw, 2.3rem) !important;
-            font-weight: 900 !important;
-            display: block !important;
-            margin-bottom: 10px !important;
-        }
-        .istruzione-box {
-            color: white !important;
-            font-size: 1.2rem !important;
-            display: block !important;
-            margin-bottom: 25px !important;
-        }
-        div.stButton > button {
-            width: 160px !important;
-            background-color: #FFD700 !important;
-            color: black !important;
-            font-weight: bold !important;
-            font-size: 1.1rem !important;
-            margin: 25px auto !important;
-            display: block !important;
-        }
+        .titolo-box { color: #FFD700 !important; font-size: 2.3rem !important; font-weight: 900 !important; display: block !important; margin-bottom: 10px !important; }
+        .istruzione-box { color: white !important; font-size: 1.2rem !important; display: block !important; margin-bottom: 25px !important; }
+        div.stButton > button { width: 160px !important; background-color: #FFD700 !important; color: black !important; font-weight: bold !important; font-size: 1.1rem !important; margin: 25px auto !important; display: block !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -61,36 +42,17 @@ if not st.session_state.autenticato:
                 st.error("Codice errato")
     st.stop()
 
-# --- CSS GENERALE (Font +1pt) ---
+# --- CSS GENERALE ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .block-container { padding-top: 4rem !important; padding-bottom: 0rem !important; }
-    .logo-style { 
-        font-family: 'Georgia', serif; 
-        font-size: 3.1rem; 
-        font-weight: bold; 
-        color: #FFD700; 
-        text-shadow: 2px 2px 4px #000;
-        line-height: 1.0; 
-        margin-bottom: -10px; 
-    }
-    .quesito-style { 
-        color: #FFEB3B !important; 
-        font-size: 1.6rem !important; 
-        font-weight: bold !important; 
-        line-height: 1.2; 
-    }
-    .stRadio label p { 
-        font-size: 1.3rem !important; 
-        color: #FFFFFF !important; 
-        font-weight: 500 !important; 
-    }
+    .logo-style { font-family: 'Georgia', serif; font-size: 3.1rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; line-height: 1.0; margin-bottom: -10px; }
+    .quesito-style { color: #FFEB3B !important; font-size: 1.6rem !important; font-weight: bold !important; line-height: 1.2; }
+    .stRadio label p { font-size: 1.3rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
     .timer-style { font-size: 2.6rem; font-weight: bold; text-align: right; }
     .stButton>button { height: 50px !important; font-size: 1.1rem !important; font-weight: bold !important; }
-    .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; font-size: 1.1rem; }
     p, span, label { font-size: 1.1rem !important; } 
-    .stAlert p { font-size: 1.0rem !important; }
     hr { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -98,7 +60,6 @@ st.markdown("""
 # --- INIZIALIZZAZIONE ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 
-# Caricamento Discipline e Codici Dispense
 if 'dict_discipline' not in st.session_state:
     try:
         df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
@@ -147,21 +108,13 @@ def genera_report_pdf():
     larghezza_utile = 100 
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
-    pdf.ln(5)
-    pdf.set_font("helvetica", 'B', 12)
-    pdf.cell(larghezza_utile, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
-    pdf.set_font("helvetica", '', 10)
-    pdf.cell(larghezza_utile, 6, pulisci_testo(f"Esatte: {esatte} | Errate: {errate} | Non date: {non_date}"), ln=True, align='C')
     pdf.ln(10)
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
-        r_e = str(row['Corretta']).strip()
         pdf.set_font("helvetica", 'B', 11)
         pdf.multi_cell(larghezza_utile, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
         pdf.set_font("helvetica", '', 11)
-        pdf.multi_cell(larghezza_utile, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
-        pdf.ln(2)
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.multi_cell(larghezza_utile, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {row['Corretta']}"), border=0, align='L')
         pdf.ln(5) 
     return bytes(pdf.output())
 
@@ -169,14 +122,8 @@ def importa_quesiti():
     try:
         df = pd.read_excel("quiz.xlsx", sheet_name=0)
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
-        try:
-            df_p = pd.read_excel("quiz.xlsx", sheet_name="Punteggi")
-            st.session_state.punteggi["Corretta"] = float(df_p.iloc[0, 0])
-            st.session_state.punteggi["Non Data"] = float(df_p.iloc[0, 1])
-            st.session_state.punteggi["Errata"] = float(df_p.iloc[0, 2])
-        except: pass
         frames = []
-        for i in range(9): # Forza controllo su 9 potenziali intervalli
+        for i in range(9):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
             if d.strip().isdigit() and a.strip().isdigit():
                 frames.append(df.iloc[int(d)-1 : int(a)])
@@ -199,112 +146,87 @@ def mostra_timer():
             st.session_state.fase = "CONCLUSIONE"
             st.rerun()
 
-# --- LOGICA NAVIGAZIONE ---
-if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
-    st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
-    if st.session_state.fase == "CONFERMA":
-        with st.container(border=True):
-            st.write("## ❓ Vuoi consegnare la prova?")
-            c1, c2 = st.columns(2)
-            if c1.button("Sì, CONSEGNA", use_container_width=True):
-                st.session_state.fase = "CONCLUSIONE"
-                st.rerun()
-            if c2.button("No, CONTINUA", use_container_width=True):
-                st.session_state.fase = "PROVA"
-                st.rerun()
-    else:
-        esatte, errate, non_date, punti_tot = calcola_risultati()
-        st.markdown(f"""
-            <div class="risultato-box">
-                <h2>✅ Esame completato!</h2>
-                <p style="font-size:1.6rem;">Punteggio Totale: <b>{punti_tot}</b></p>
-                <p>Risposte Esatte: {esatte} | Errate: {errate} | Non date: {non_date}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.download_button("📩 SCARICA REPORT E CHIUDI", 
-                           data=genera_report_pdf(), 
-                           file_name="esito_esame.pdf", 
-                           on_click=lambda: st.session_state.clear(), 
-                           use_container_width=True)
-    st.stop()
-
-# --- LAYOUT PRINCIPALE ---
+# --- LAYOUT ---
 t1, t2 = st.columns([7, 3])
 with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
 with t2: mostra_timer()
-
-st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1)'>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
 
 col_sx, col_centro, col_dx = st.columns([2.8, 7, 3.2])
 
 with col_sx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:5px;margin-bottom:10px;font-size:1.1rem;">Elenco domande</p>', unsafe_allow_html=True)
+    st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;border-radius:5px;padding:5px;">Elenco domande</p>', unsafe_allow_html=True)
     if not st.session_state.df_filtrato.empty:
-        with st.container(height=400, border=False):
+        with st.container(height=350):
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
-            sel = st.radio("Lista", lista, index=st.session_state.indice, label_visibility="collapsed", key=f"nav_{st.session_state.indice}")
+            sel = st.radio("Lista", lista, index=st.session_state.indice, key=f"nav_{st.session_state.indice}", label_visibility="collapsed")
             st.session_state.indice = lista.index(sel)
     
     st.write("---")
-    with st.expander("📚 DISPENSE DI STUDIO"):
-        cod_immesso = st.text_input("Codice sblocco:", key="cod_dispensa", type="password")
-        if cod_immesso in st.session_state.get('codici_dispense', []) and cod_immesso != "":
+    with st.expander("📚 DISPENSE DI STUDIO", expanded=True):
+        cod_immesso = st.text_input("Codice + INVIO:", key="cod_dispensa", type="password").strip()
+        if cod_immesso in st.session_state.get('codici_dispense', []):
             st.success("Sbloccato!")
-            file_dispense = ["1 Elementi di Diritto Amministrativo.pdf", "2 I reati contro la Pubblica Amministrazione nel diritto penale.pdf", "3 Codice dell’Amministrazione digitale.pdf", "4 Lingua inglese_liv_B.pdf", "5 L' ASSISTENTE PER LA TUTELA E VIGILANZA DEL PATRIMONIO E I SERVIZI CULTURALI.pdf"]
+            file_dispense = [
+                "1 Elementi di Diritto Amministrativo.pdf",
+                "2 I reati contro la Pubblica Amministrazione nel diritto penale.pdf",
+                "3 Codice dell’Amministrazione digitale.pdf",
+                "4 Lingua inglese_liv_B.pdf",
+                "5 L' ASSISTENTE PER LA TUTELA E VIGILANZA DEL PATRIMONIO E I SERVIZI CULTURALI.pdf"
+            ]
             for nome_f in file_dispense:
                 percorso = os.path.join("dispense", nome_f)
                 if os.path.exists(percorso):
                     with open(percorso, "rb") as f:
-                        st.download_button(label=f"📄 {nome_f[:25]}...", data=f, file_name=nome_f, key=f"dl_{nome_f}")
+                        st.download_button(label=f"⬇️ {nome_f[:22]}...", data=f, file_name=nome_f, key=f"dl_{nome_f}", use_container_width=True)
 
 with col_centro:
     if not st.session_state.df_filtrato.empty:
         q = st.session_state.df_filtrato.iloc[st.session_state.indice]
         st.markdown(f'<div class="quesito-style">{st.session_state.indice + 1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
-        st.write("<br>", unsafe_allow_html=True)
         if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
-            img_nome = str(q['Immagine']).strip()
-            percorso_img = os.path.join("immagini", img_nome)
-            if os.path.exists(percorso_img):
-                sx, centro, dx = st.columns([1, 4, 1]) 
-                with centro: st.image(percorso_img, use_container_width=True)
+            if os.path.exists(os.path.join("immagini", str(q['Immagine']))):
+                st.image(os.path.join("immagini", str(q['Immagine'])), width=400)
         
         opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
         idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
+        
         def salva_r(): 
-            chiave = f"r_{st.session_state.indice}"
-            if chiave in st.session_state and st.session_state[chiave]:
-                st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
+            if f"r_{st.session_state.indice}" in st.session_state:
+                st.session_state.risposte_date[st.session_state.indice] = st.session_state[f"r_{st.session_state.indice}"][0]
+
         st.radio("Scelte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+        
         st.write("---")
         c1, c2, c3 = st.columns(3)
-        if c1.button("⬅️ Precedente"):
+        if c1.button("⬅️ Prec."):
             if st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
-        if c2.button("🏁 CONSEGNA", use_container_width=True): st.session_state.fase = "CONFERMA"; st.rerun()
-        if c3.button("Successivo ➡️"):
+        if c2.button("🏁 CONSEGNA", use_container_width=True): 
+            st.session_state.fase = "CONCLUSIONE"; st.rerun()
+        if c3.button("Succ. ➡️"):
             if st.session_state.indice < len(st.session_state.df_filtrato) - 1: st.session_state.indice += 1; st.rerun()
     else:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
 with col_dx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:5px;margin-bottom:10px;font-size:1.1rem;">Discipline e Gruppi</p>', unsafe_allow_html=True)
-    
-    # --- CICLO CORAZZATO PER 9 RIGHE ---
+    st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;border-radius:5px;padding:5px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     for i in range(9):
-        nomi_discipline = list(st.session_state.dict_discipline.keys())
-        codice_disp = nomi_discipline[i] if i < len(nomi_discipline) else f"G{i+1}"
-        testo_disp = st.session_state.dict_discipline.get(codice_disp, f"Gruppo {i+1}")
-        
+        nomi = list(st.session_state.dict_discipline.keys())
+        cod = nomi[i] if i < len(nomi) else f"G{i+1}"
+        testo = st.session_state.dict_discipline.get(cod, f"Gruppo {i+1}")
         c1, c2, c3 = st.columns([6, 2, 2])
-        with c1:
-            st.markdown(f"<p style='font-size:0.95rem; color:white; margin-top:5px; line-height:1.2;'><b>{codice_disp}</b>: {testo_disp}</p>", unsafe_allow_html=True)
-        with c2:
-            st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed")
-        with c3:
-            st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed")
-    
+        with c1: st.markdown(f"<p style='font-size:0.9rem; color:white;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
+        with c2: st.text_input("D", key=f"da_{i}", placeholder="Da", label_visibility="collapsed")
+        with c3: st.text_input("A", key=f"a_{i}", placeholder="A", label_visibility="collapsed")
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
-    st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
+    st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+
+# --- CONCLUSIONE ---
+if st.session_state.fase == "CONCLUSIONE":
+    st.balloons()
+    esatte, errate, non_date, punti = calcola_risultati()
+    st.markdown(f"<div style='background:white;padding:20px;border-radius:10px;color:black;'><h2>Esame Finito!</h2>Punti: {punti}</div>", unsafe_allow_html=True)
+    st.download_button("Scarica Report", data=genera_report_pdf(), file_name="report.pdf", on_click=lambda: st.session_state.clear())
+    st.stop()
