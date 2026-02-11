@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import time
+import base64
 from fpdf import FPDF
 
 # Configurazione pagina
@@ -40,7 +41,7 @@ if not st.session_state.autenticato:
                 st.error("Codice errato")
     st.stop()
 
-# --- CSS GENERALE (Font Ingranditi) ---
+# --- CSS GENERALE ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
@@ -49,11 +50,13 @@ st.markdown("""
     .stRadio label p { font-size: 1.3rem !important; color: #FFFFFF !important; }
     .timer-style { font-size: 2.6rem; font-weight: bold; text-align: right; }
     p, span, label { font-size: 1.1rem !important; } 
+    hr { margin: 10px 0; border-color: rgba(255,255,255,0.1); }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INIZIALIZZAZIONE DATI ---
+# --- INIZIALIZZAZIONE ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
+if 'pdf_selezionato' not in st.session_state: st.session_state.pdf_selezionato = None
 
 if 'dict_discipline' not in st.session_state:
     try:
@@ -62,14 +65,11 @@ if 'dict_discipline' not in st.session_state:
         st.session_state.dict_discipline = pd.Series(df_disc.Disciplina.values, index=df_disc.Codice).to_dict()
     except: st.session_state.dict_discipline = {}
 
-# CARICAMENTO CODICI DISPENSE (Legge Colonna A)
 if 'codici_dispense' not in st.session_state:
     try:
         df_cod = pd.read_excel("quiz.xlsx", sheet_name="Dispensecod", header=None)
-        # Prende tutti i valori della prima colonna (A), li trasforma in stringhe e pulisce gli spazi
         st.session_state.codici_dispense = [str(x).strip() for x in df_cod[0].dropna().tolist()]
-    except Exception as e:
-        st.session_state.codici_dispense = []
+    except: st.session_state.codici_dispense = []
 
 if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
 if 'indice' not in st.session_state: st.session_state.indice = 0
@@ -77,6 +77,12 @@ if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 
 # --- FUNZIONI ---
+def display_pdf(file_path):
+    with open(file_path, "rb") as f:
+        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
     repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
@@ -88,9 +94,8 @@ def calcola_risultati():
     esatte, errate, non_date = 0, 0, 0
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i)
-        r_e = str(row['Corretta']).strip()
         if r_u is None: non_date += 1
-        elif r_u == r_e: esatte += 1
+        elif r_u == str(row['Corretta']).strip(): esatte += 1
         else: errate += 1
     punti = (esatte * 0.75) + (errate * -0.25)
     return esatte, errate, non_date, round(punti, 2)
@@ -98,7 +103,7 @@ def calcola_risultati():
 def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
-    lu = 100 # Larghezza Utile Alfredo3
+    lu = 100 # LARGHEZZA UTILE ALFREDO3
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(lu, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     for i, row in st.session_state.df_filtrato.iterrows():
@@ -143,40 +148,54 @@ col_sx, col_centro, col_dx = st.columns([2.8, 7, 3.2])
 with col_sx:
     st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;border-radius:5px;padding:5px;">Elenco domande</p>', unsafe_allow_html=True)
     if not st.session_state.df_filtrato.empty:
-        with st.container(height=350):
+        with st.container(height=300):
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
             sel = st.radio("L", lista, index=st.session_state.indice, key=f"n_{st.session_state.indice}", label_visibility="collapsed")
             st.session_state.indice = lista.index(sel)
+            st.session_state.pdf_selezionato = None # Reset se clicchi domanda
     
     st.write("---")
     with st.expander("📚 DISPENSE DI STUDIO", expanded=True):
         cod_immesso = st.text_input("Codice + INVIO:", key="cod_dispensa", type="password").strip()
-        # Controllo se il codice è presente nella lista caricata dall'Excel
         if cod_immesso != "" and cod_immesso in st.session_state.codici_dispense:
             st.success("Sbloccato!")
-            file_dispense = ["1 Elementi di Diritto Amministrativo.pdf", "2 I reati contro la Pubblica Amministrazione nel diritto penale.pdf", "3 Codice dell’Amministrazione digitale.pdf", "4 Lingua inglese_liv_B.pdf", "5 L' ASSISTENTE PER LA TUTELA E VIGILANZA DEL PATRIMONIO E I SERVIZI CULTURALI.pdf"]
-            for nome_f in file_dispense:
-                percorso = os.path.join("dispense", nome_f)
-                if os.path.exists(percorso):
-                    with open(percorso, "rb") as f:
-                        st.download_button(label=f"⬇️ {nome_f[:20]}...", data=f, file_name=nome_f, key=f"dl_{nome_f}", use_container_width=True)
-        elif cod_immesso != "":
-            st.error("Codice non trovato")
+            # LETTURA DINAMICA CARTELLA
+            if os.path.exists("dispense"):
+                files = [f for f in os.listdir("dispense") if f.endswith(".pdf")]
+                files.sort()
+                scelta = st.selectbox("Seleziona dispensa:", ["-- Scegli --"] + files, key="select_pdf")
+                if scelta != "-- Scegli --":
+                    if st.button("📖 LEGGI ORA", use_container_width=True):
+                        st.session_state.pdf_selezionato = scelta
+                    st.download_button("⬇️ SCARICA PDF", data=open(os.path.join("dispense", scelta), "rb"), file_name=scelta, use_container_width=True)
+        elif cod_immesso != "": st.error("Codice errato")
 
 with col_centro:
-    if not st.session_state.df_filtrato.empty:
+    # SEZIONE LETTURA PDF
+    if st.session_state.pdf_selezionato:
+        st.markdown(f"### 📖 Lettura: {st.session_state.pdf_selezionato}")
+        if st.button("🔙 TORNA AL QUIZ"):
+            st.session_state.pdf_selezionato = None
+            st.rerun()
+        display_pdf(os.path.join("dispense", st.session_state.pdf_selezionato))
+    
+    # SEZIONE QUIZ
+    elif not st.session_state.df_filtrato.empty:
         q = st.session_state.df_filtrato.iloc[st.session_state.indice]
         st.markdown(f'<div class="quesito-style">{st.session_state.indice + 1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
+        if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
+            if os.path.exists(os.path.join("immagini", str(q['Immagine']))):
+                st.image(os.path.join("immagini", str(q['Immagine'])), width=450)
+        
+        opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
+        ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
+        idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
         def salva_r(): 
             if f"r_{st.session_state.indice}" in st.session_state:
                 st.session_state.risposte_date[st.session_state.indice] = st.session_state[f"r_{st.session_state.indice}"][0]
 
-        opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
-        ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
-        idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         st.radio("S", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
-        
         st.write("---")
         c1, c2, c3 = st.columns(3)
         if c1.button("⬅️ Prec."):
