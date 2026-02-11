@@ -26,24 +26,23 @@ if not st.session_state.autenticato:
         }
         .titolo-box {
             color: #FFD700 !important;
-            font-size: clamp(1.6rem, 7vw, 2.3rem) !important; /* Ingrandito */
+            font-size: clamp(1.6rem, 7vw, 2.3rem) !important;
             font-weight: 900 !important;
             display: block !important;
             margin-bottom: 10px !important;
         }
         .istruzione-box {
             color: white !important;
-            font-size: 1.2rem !important; /* Ingrandito da 1.1 */
+            font-size: 1.2rem !important;
             display: block !important;
             margin-bottom: 25px !important;
         }
-        div[data-testid="stTextInput"] label p { font-size: 1.1rem !important; }
         div.stButton > button {
             width: 160px !important;
             background-color: #FFD700 !important;
             color: black !important;
             font-weight: bold !important;
-            font-size: 1.1rem !important; /* Ingrandito */
+            font-size: 1.1rem !important;
             margin: 25px auto !important;
             display: block !important;
         }
@@ -62,14 +61,14 @@ if not st.session_state.autenticato:
                 st.error("Codice errato")
     st.stop()
 
-# --- CSS GENERALE (Font aumentati di 1pt/0.1rem) ---
+# --- CSS GENERALE (Font aumentati) ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .block-container { padding-top: 4rem !important; padding-bottom: 0rem !important; }
     .logo-style { 
         font-family: 'Georgia', serif; 
-        font-size: 3.1rem; /* Ingrandito da 3 */
+        font-size: 3.1rem; 
         font-weight: bold; 
         color: #FFD700; 
         text-shadow: 2px 2px 4px #000;
@@ -78,38 +77,40 @@ st.markdown("""
     }
     .quesito-style { 
         color: #FFEB3B !important; 
-        font-size: 1.6rem !important; /* Ingrandito da 1.5 */
+        font-size: 1.6rem !important; 
         font-weight: bold !important; 
         line-height: 1.2; 
     }
-    /* Radio buttons (risposte e elenco) */
     .stRadio label p { 
-        font-size: 1.3rem !important; /* Ingrandito da 1.2 */
+        font-size: 1.3rem !important; 
         color: #FFFFFF !important; 
         font-weight: 500 !important; 
     }
-    .timer-style { font-size: 2.6rem; font-weight: bold; text-align: right; } /* Ingrandito da 2.5 */
+    .timer-style { font-size: 2.6rem; font-weight: bold; text-align: right; }
     .stButton>button { height: 50px !important; font-size: 1.1rem !important; font-weight: bold !important; }
     .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; font-size: 1.1rem; }
-    
-    /* Testi piccoli di sistema */
     p, span, label { font-size: 1.1rem !important; } 
-    .stAlert p { font-size: 1.0rem !important; } /* Ingrandito da 0.9 */
-    
+    .stAlert p { font-size: 1.0rem !important; }
     hr { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INIZIALIZZAZIONE (Invariata) ---
+# --- INIZIALIZZAZIONE ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 
+# Caricamento Discipline e Codici Dispense
 if 'dict_discipline' not in st.session_state:
     try:
         df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
         df_disc = df_disc.dropna(subset=['Codice', 'Disciplina'])
         st.session_state.dict_discipline = pd.Series(df_disc.Disciplina.values, index=df_disc.Codice).to_dict()
+        
+        # Caricamento codici dispense
+        df_cod = pd.read_excel("quiz.xlsx", sheet_name="Dispensecod")
+        st.session_state.codici_dispense = df_cod['Codice'].astype(str).tolist()
     except Exception as e:
         st.session_state.dict_discipline = {}
+        st.session_state.codici_dispense = []
 
 if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
 if 'indice' not in st.session_state: st.session_state.indice = 0
@@ -117,7 +118,7 @@ if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
 
-# --- FUNZIONI (Invariate) ---
+# --- FUNZIONI ---
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
     repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
@@ -141,7 +142,7 @@ def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
-    larghezza_utile = 100 
+    larghezza_utile = 100 # Larghezza corretta Alfredo3
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
@@ -171,8 +172,7 @@ def importa_quesiti():
             st.session_state.punteggi["Corretta"] = float(df_p.iloc[0, 0])
             st.session_state.punteggi["Non Data"] = float(df_p.iloc[0, 1])
             st.session_state.punteggi["Errata"] = float(df_p.iloc[0, 2])
-        except:
-            pass
+        except: pass
         frames = []
         for i in range(len(st.session_state.dict_discipline)):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
@@ -183,8 +183,7 @@ def importa_quesiti():
             st.session_state.indice = 0
             st.session_state.risposte_date = {}
             st.session_state.start_time = time.time()
-    except Exception as e:
-        st.error(f"Errore caricamento Excel: {e}")
+    except Exception as e: st.error(f"Errore caricamento Excel: {e}")
 
 @st.fragment(run_every=1)
 def mostra_timer():
@@ -197,7 +196,7 @@ def mostra_timer():
             st.session_state.fase = "CONCLUSIONE"
             st.rerun()
 
-# --- LOGICA NAVIGAZIONE (Invariata) ---
+# --- LOGICA NAVIGAZIONE ---
 if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
     st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
     if st.session_state.fase == "CONFERMA":
@@ -239,10 +238,31 @@ col_sx, col_centro, col_dx = st.columns([2.8, 7, 3.2])
 with col_sx:
     st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:5px;margin-bottom:10px;font-size:1.1rem;">Elenco domande</p>', unsafe_allow_html=True)
     if not st.session_state.df_filtrato.empty:
-        with st.container(height=550, border=False):
+        with st.container(height=400, border=False):
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
             sel = st.radio("Lista", lista, index=st.session_state.indice, label_visibility="collapsed", key=f"nav_{st.session_state.indice}")
             st.session_state.indice = lista.index(sel)
+    
+    # --- SEZIONE DISPENSE ---
+    st.write("---")
+    with st.expander("📚 DISPENSE DI STUDIO"):
+        cod_immesso = st.text_input("Codice sblocco:", key="cod_dispensa", type="password")
+        if cod_immesso in st.session_state.get('codici_dispense', []) and cod_immesso != "":
+            st.success("Sbloccato!")
+            file_dispense = [
+                "1 Elementi di Diritto Amministrativo.pdf",
+                "2 I reati contro la Pubblica Amministrazione nel diritto penale.pdf",
+                "3 Codice dell’Amministrazione digitale.pdf",
+                "4 Lingua inglese_liv_B.pdf",
+                "5 L' ASSISTENTE PER LA TUTELA E VIGILANZA DEL PATRIMONIO E I SERVIZI CULTURALI.pdf"
+            ]
+            for nome_f in file_dispense:
+                percorso = os.path.join("dispense", nome_f)
+                if os.path.exists(percorso):
+                    with open(percorso, "rb") as f:
+                        st.download_button(label=f"📄 {nome_f[:25]}...", data=f, file_name=nome_f, key=f"dl_{nome_f}")
+        elif cod_immesso != "":
+            st.error("Codice errato")
 
 with col_centro:
     if not st.session_state.df_filtrato.empty:
@@ -255,8 +275,7 @@ with col_centro:
             percorso_img = os.path.join("immagini", img_nome)
             if os.path.exists(percorso_img):
                 sx, centro, dx = st.columns([1, 4, 1]) 
-                with centro:
-                    st.image(percorso_img, use_container_width=True)
+                with centro: st.image(percorso_img, use_container_width=True)
         
         opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
@@ -292,14 +311,10 @@ with col_dx:
         for i, cod in enumerate(chiavi):
             testo = st.session_state.dict_discipline[cod]
             c1, c2, c3 = st.columns([6, 2, 2])
-            with c1:
-                st.markdown(f"<p style='font-size:0.95rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
-            with c2:
-                st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed", max_chars=6)
-            with c3:
-                st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed", max_chars=6)
+            with c1: st.markdown(f"<p style='font-size:0.95rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
+            with c2: st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed", max_chars=6)
+            with c3: st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed", max_chars=6)
     
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
-
