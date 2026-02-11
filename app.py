@@ -77,24 +77,14 @@ if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 
 # --- FUNZIONI ---
-def display_pdf_safe(file_path, file_name):
-    """Crea un link sicuro per aprire il PDF in una nuova scheda"""
+def display_pdf_safe(file_path):
+    """Visualizzatore PDF integrato ottimizzato"""
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
     
-    href = f'''
-        <div style="text-align:center; background:rgba(255,215,0,0.05); padding:30px; border-radius:15px; border:1px solid #FFD700; margin:20px 0;">
-            <h3 style="color:white; margin-bottom:10px;">📄 {file_name}</h3>
-            <p style="color:#CCC; font-size:1rem; margin-bottom:20px;">Il file è pronto per la consultazione.</p>
-            <a href="data:application/pdf;base64,{base64_pdf}" target="_blank" 
-               style="text-decoration:none; background-color:#FFD700; color:black; padding:12px 25px; 
-                      border-radius:8px; font-weight:bold; font-size:1.1rem; display:inline-block;">
-               🚀 APRI DISPENSA A TUTTO SCHERMO
-            </a>
-            <p style="color:#888; font-size:0.8rem; margin-top:15px;">(Cliccando il tasto, la dispensa si aprirà in una nuova scheda del browser senza blocchi)</p>
-        </div>
-    '''
-    st.markdown(href, unsafe_allow_html=True)
+    # Parametri: #toolbar=1 (mostra strumenti), #navpanes=0 (nasconde anteprime laterali)
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}#toolbar=1&navpanes=0&scrollbar=1" width="100%" height="800" type="application/pdf" style="border:none; background-color: white;"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
 
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
@@ -116,7 +106,7 @@ def calcola_risultati():
 def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
-    lu = 100 # LARGHEZZA UTILE ALFREDO3
+    lu = 100
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(lu, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     for i, row in st.session_state.df_filtrato.iterrows():
@@ -180,11 +170,11 @@ with col_sx:
                         st.session_state.pdf_selezionato = scelta
                         st.rerun()
                     with open(os.path.join("dispense", scelta), "rb") as f:
-                        st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, use_container_width=True)
+                        st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, key=f"dl_{scelta}", use_container_width=True)
         elif cod_immesso != "": st.error("Codice errato")
 
 with col_centro:
-    # SEZIONE LETTURA PDF (ANTI-BLOCCO)
+    # SEZIONE LETTURA PDF
     if st.session_state.pdf_selezionato:
         st.markdown(f"### 📖 Studio: {st.session_state.pdf_selezionato}")
         if st.button("🔙 CHIUDI E TORNA AL QUIZ", type="primary"):
@@ -193,7 +183,7 @@ with col_centro:
         
         percorso_pdf = os.path.join("dispense", st.session_state.pdf_selezionato)
         if os.path.exists(percorso_pdf):
-            display_pdf_safe(percorso_pdf, st.session_state.pdf_selezionato)
+            display_pdf_safe(percorso_pdf)
         else:
             st.error("File non trovato.")
     
