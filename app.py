@@ -66,6 +66,7 @@ def importa_quesiti():
             st.session_state.indice = 0
             st.session_state.risposte_date = {}
             st.session_state.start_time = time.time()
+            st.session_state.fase = "PROVA"
             st.rerun()
     except Exception as e: st.error(f"Errore: {e}")
 
@@ -74,27 +75,10 @@ def display_pdf(file_path):
         with open(file_path, "rb") as f:
             pdf_data = f.read()
             base64_pdf = base64.b64encode(pdf_data).decode('utf-8')
-        
-        # Anteprima Tecnica
-        pdf_display = f"""
-            <div style="border: 2px solid #FFD700; border-radius: 10px; overflow: hidden; background-color: white;">
-                <embed src="data:application/pdf;base64,{base64_pdf}" 
-                       width="100%" height="700px" 
-                       type="application/pdf">
-            </div>
-        """
+        pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="700px" type="application/pdf">'
         st.markdown(pdf_display, unsafe_allow_html=True)
-        
-        # Pulsante di Download (Sempre funzionante anche se Chrome blocca l'anteprima)
-        st.write("---")
-        st.download_button(
-            label="📥 SCARICA E LEGGI DISPENSA (Se l'anteprima sopra è grigia)",
-            data=pdf_data,
-            file_name=os.path.basename(file_path),
-            mime="application/pdf",
-            use_container_width=True
-        )
-    except Exception as e: st.error(f"Errore caricamento PDF: {e}")
+        st.download_button(label="📥 SCARICA DISPENSA", data=pdf_data, file_name=os.path.basename(file_path), mime="application/pdf", use_container_width=True)
+    except Exception as e: st.error(f"Errore PDF: {e}")
 
 @st.fragment(run_every=1)
 def mostra_timer():
@@ -103,15 +87,38 @@ def mostra_timer():
         minuti, secondi = int(rimanente // 60), int(rimanente % 60)
         colore = "#00FF00" if rimanente > 300 else "#FF0000"
         st.markdown(f'<p style="font-size:2rem; font-weight:bold; text-align:right; color:{colore}">⏱️ {minuti:02d}:{secondi:02d}</p>', unsafe_allow_html=True)
+        if rimanente <= 0:
+            st.session_state.fase = "CONCLUSIONE"
+            st.rerun()
 
 # --- CSS ---
 st.markdown("<style>.stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); color: white; }</style>", unsafe_allow_html=True)
 
 # --- LOGICA NAVIGAZIONE ---
 if st.session_state.vista == "TEST":
+    # GESTIONE FASI FINALI
+    if st.session_state.fase == "CONFERMA":
+        st.markdown("### ❓ Vuoi consegnare la prova?")
+        c1, c2 = st.columns(2)
+        if c1.button("Sì, CONSEGNA", use_container_width=True):
+            st.session_state.fase = "CONCLUSIONE"; st.rerun()
+        if c2.button("No, CONTINUA", use_container_width=True):
+            st.session_state.fase = "PROVA"; st.rerun()
+        st.stop()
+    
+    if st.session_state.fase == "CONCLUSIONE":
+        st.success("Test terminato! Controlla i tuoi risultati.")
+        if st.button("Ricomincia nuovo Test"):
+            st.session_state.df_filtrato = pd.DataFrame()
+            st.session_state.fase = "PROVA"
+            st.rerun()
+        st.stop()
+
+    # SCHERMATA TEST ORDINARIA
     t1, t2 = st.columns([7, 3])
-    with t1: st.markdown('<h1 style="color:#FFD700;">AlPaTest</h1>', unsafe_allow_html=True)
+    with t1: st.markdown('<h1 style="color:#FFD700; margin-bottom:0;">AlPaTest</h1>', unsafe_allow_html=True)
     with t2: mostra_timer()
+    st.markdown("---")
     
     col_sx, col_centro, col_dx = st.columns([2.5, 6.5, 3])
     
@@ -121,18 +128,35 @@ if st.session_state.vista == "TEST":
         st.write("---")
         if not st.session_state.df_filtrato.empty:
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
-            sel = st.radio("Domande", lista, index=st.session_state.indice, key="nav_main")
+            sel = st.radio("Seleziona Domanda", lista, index=st.session_state.indice, key="nav_main")
             st.session_state.indice = lista.index(sel)
 
     with col_centro:
         if not st.session_state.df_filtrato.empty:
             q = st.session_state.df_filtrato.iloc[st.session_state.indice]
-            st.subheader(f"{st.session_state.indice+1}. {q['Domanda']}")
+            st.markdown(f"### {st.session_state.indice+1}. {q['Domanda']}")
+            
+            # --- SEZIONE RISPOSTE ---
+            opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
+            ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
+            idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
+            
+            def salva_risposta():
+                val = st.session_state[f"quiz_{st.session_state.indice}"]
+                st.session_state.risposte_date[st.session_state.indice] = val[0] # Prende la lettera A, B, C o D
+
+            st.radio("Scegli la risposta:", opts, index=idx_prec, key=f"quiz_{st.session_state.indice}", on_change=salva_risposta)
+            
             st.write("---")
-            c1, c2 = st.columns(2)
-            if c1.button("⬅️ Prec"): st.session_state.indice = max(0, st.session_state.indice-1); st.rerun()
-            if c2.button("Succ ➡️"): st.session_state.indice = min(len(st.session_state.df_filtrato)-1, st.session_state.indice+1); st.rerun()
-        else: st.info("Configura le discipline e importa")
+            c1, c2, c3 = st.columns(3)
+            if c1.button("⬅️ Prec"): 
+                st.session_state.indice = max(0, st.session_state.indice-1); st.rerun()
+            if c2.button("🏁 CONSEGNA", type="primary"): 
+                st.session_state.fase = "CONFERMA"; st.rerun()
+            if c3.button("Succ ➡️"): 
+                st.session_state.indice = min(len(st.session_state.df_filtrato)-1, st.session_state.indice+1); st.rerun()
+        else:
+            st.info("Configura le discipline a destra e clicca su 'Importa Quesiti'")
 
     with col_dx:
         st.markdown("### Discipline")
@@ -142,11 +166,11 @@ if st.session_state.vista == "TEST":
                 c1, c2 = st.columns(2)
                 st.text_input("Da", key=f"key_da_{i}", label_visibility="collapsed")
                 st.text_input("A", key=f"key_a_{i}", label_visibility="collapsed")
-        st.checkbox("Simulazione", key="simulazione")
+        st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
 
 else:
-    # --- AREA DISPENSE ---
+    # AREA DISPENSE
     st.markdown('<h1 style="color:#FFD700;">AlPaTest - Studio</h1>', unsafe_allow_html=True)
     if st.button("⬅️ TORNA AL TEST", use_container_width=True):
         st.session_state.vista = "TEST"; st.rerun()
@@ -160,8 +184,6 @@ else:
                 scelta = st.radio("Seleziona file:", sorted(lista_pdf))
                 p_sel = os.path.join("dispense", scelta)
             else: st.warning("Nessun PDF trovato"); p_sel = None
-        else: st.error("Cartella 'dispense' non trovata"); p_sel = None
+        else: st.error("Cartella 'dispense' mancante"); p_sel = None
     with cv:
-        if p_sel:
-            st.success(f"Lettura: {scelta}")
-            display_pdf(p_sel)
+        if p_sel: display_pdf(p_sel)
