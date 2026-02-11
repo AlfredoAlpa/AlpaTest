@@ -5,33 +5,17 @@ import time
 import base64
 from fpdf import FPDF
 
-# Configurazione pagina
+# 1. CONFIGURAZIONE
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- LOGIN ---
+# 2. LOGIN
 if 'autenticato' not in st.session_state:
     st.session_state.autenticato = False
 
 if not st.session_state.autenticato:
-    st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] > div:has(.titolo-box) {
-            border: 3px solid #FFD700 !important;
-            border-radius: 20px !important;
-            padding: 50px 20px !important;
-            background-color: rgba(0, 0, 0, 0.5) !important;
-            width: 95% !important; max-width: 550px !important; margin: 40px auto !important; text-align: center !important;
-        }
-        .titolo-box { color: #FFD700 !important; font-size: 2.2rem !important; font-weight: 900 !important; display: block; margin-bottom: 10px; }
-        .istruzione-box { color: white !important; font-size: 1.1rem !important; display: block; margin-bottom: 25px; }
-        div.stButton > button { width: 160px !important; background-color: #FFD700 !important; color: black !important; font-weight: bold !important; margin: 25px auto !important; display: block !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
+    st.markdown('<h1 style="color: #FFD700; text-align: center;">🔐 Accesso AlPaTest</h1>', unsafe_allow_html=True)
     with st.container():
-        st.markdown('<span class="titolo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
-        st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
-        codice = st.text_input("", type="password", label_visibility="collapsed", key="login_widget").strip()
+        codice = st.text_input("Codice di accesso:", type="password", key="login_key").strip()
         if st.button("ENTRA"):
             if codice.lower() in ["open", "studente01"]:
                 st.session_state.autenticato = True
@@ -40,174 +24,115 @@ if not st.session_state.autenticato:
                 st.error("Codice errato")
     st.stop()
 
-# --- CSS GENERALE ---
+# 3. CSS
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
-    .logo-style { font-family: 'Georgia', serif; font-size: 3rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; line-height: 1.0; margin-bottom: -10px; }
-    .quesito-style { color: #FFEB3B !important; font-size: 1.5rem !important; font-weight: bold !important; line-height: 1.2; }
-    .stRadio label p { font-size: 1.2rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
-    .timer-style { font-size: 2.5rem; font-weight: bold; text-align: right; }
-    .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; }
+    .logo-style { font-size: 3rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
+    .quesito-style { color: #FFEB3B !important; font-size: 1.5rem !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INIZIALIZZAZIONE ---
+# 4. INIZIALIZZAZIONE STATO
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
+if 'indice' not in st.session_state: st.session_state.indice = 0
+if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
+if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
+
+# Caricamento Discipline
 if 'dict_discipline' not in st.session_state:
     try:
-        df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
-        df_disc = df_disc.dropna(subset=['Codice', 'Disciplina'])
+        df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline").dropna(subset=['Codice', 'Disciplina'])
         st.session_state.dict_discipline = pd.Series(df_disc.Disciplina.values, index=df_disc.Codice).to_dict()
     except:
         st.session_state.dict_discipline = {}
 
-if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
-if 'indice' not in st.session_state: st.session_state.indice = 0
-if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
-if 'start_time' not in st.session_state: st.session_state.start_time = None
-if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
-
-# --- FUNZIONI ---
-def pulisci_testo(testo):
-    if pd.isna(testo) or testo == "": return " "
-    repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
-    t = str(testo)
-    for k,v in repls.items(): t = t.replace(k,v)
-    return t.encode('latin-1','replace').decode('latin-1')
-
-def calcola_risultati():
-    esatte, errate, non_date = 0, 0, 0
-    for i, row in st.session_state.df_filtrato.iterrows():
-        r_u = st.session_state.risposte_date.get(i)
-        r_e = str(row['Corretta']).strip()
-        if r_u is None: non_date += 1
-        elif r_u == r_e: esatte += 1
-        else: errate += 1
-    punti = (esatte * st.session_state.punteggi["Corretta"]) + (non_date * st.session_state.punteggi["Non Data"]) + (errate * st.session_state.punteggi["Errata"])
-    return esatte, errate, non_date, round(punti, 2)
-
-def genera_report_pdf():
-    esatte, errate, non_date, punti_tot = calcola_risultati()
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(190, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
-    pdf.ln(10)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(190, 10, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True)
-    pdf.set_font("Arial", '', 11)
-    for i, row in st.session_state.df_filtrato.iterrows():
-        r_u = st.session_state.risposte_date.get(i, "N.D.")
-        r_e = str(row['Corretta']).strip()
-        pdf.multi_cell(190, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
-        pdf.multi_cell(190, 7, pulisci_testo(f"Tua: {r_u} | Esatta: {r_e}"))
-        pdf.ln(2)
-    return bytes(pdf.output(dest='S'))
-
+# 5. FUNZIONI
 def importa_quesiti():
     try:
         df = pd.read_excel("quiz.xlsx", sheet_name=0)
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
         frames = []
         for i in range(len(st.session_state.dict_discipline)):
-            # Leggiamo direttamente dai widget usando le chiavi
-            d = st.session_state.get(f"da_{i}","")
-            a = st.session_state.get(f"a_{i}","")
+            # Leggiamo i valori dai widget usando le chiavi salvate in session_state
+            d = st.session_state.get(f"da_{i}", "")
+            a = st.session_state.get(f"a_{i}", "")
             if str(d).isdigit() and str(a).isdigit():
                 frames.append(df.iloc[int(d)-1 : int(a)])
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
             st.session_state.indice = 0
             st.session_state.risposte_date = {}
-            st.session_state.start_time = time.time()
             st.session_state.fase = "PROVA"
-            st.rerun()
-    except Exception as e: st.error(f"Errore: {e}")
+    except Exception as e: st.error(f"Errore Importazione: {e}")
 
-@st.fragment(run_every=1)
-def mostra_timer():
-    if st.session_state.start_time and st.session_state.get("simulazione", False):
-        rimanente = max(0, (30 * 60) - (time.time() - st.session_state.start_time))
-        minuti, secondi = int(rimanente // 60), int(rimanente % 60)
-        colore = "#00FF00" if rimanente > 300 else "#FF0000"
-        st.markdown(f'<p class="timer-style" style="color:{colore}">⏱️ {minuti:02d}:{secondi:02d}</p>', unsafe_allow_html=True)
-        if rimanente <= 0:
-            st.session_state.fase = "CONCLUSIONE"
-            st.rerun()
-
-# --- LOGICA NAVIGAZIONE ---
-if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
-    st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
-    if st.session_state.fase == "CONFERMA":
-        with st.container(border=True):
-            st.write("## ❓ Vuoi consegnare la prova?")
-            c1, c2 = st.columns(2)
-            if c1.button("Sì, CONSEGNA", use_container_width=True):
-                st.session_state.fase = "CONCLUSIONE"; st.rerun()
-            if c2.button("No, CONTINUA", use_container_width=True):
-                st.session_state.fase = "PROVA"; st.rerun()
-    else:
-        esatte, errate, non_date, punti_tot = calcola_risultati()
-        st.markdown(f'<div class="risultato-box"><h2>✅ Completato! Punti: {punti_tot}</h2></div>', unsafe_allow_html=True)
-        st.download_button("📩 REPORT", data=genera_report_pdf(), file_name="esito.pdf")
-        if st.button("Nuovo Test"):
-             st.session_state.fase = "PROVA"
-             st.session_state.df_filtrato = pd.DataFrame()
-             st.rerun()
+# 6. LAYOUT
+if st.session_state.fase == "CONFERMA":
+    st.title("🏆 AlPaTest")
+    st.warning("### ❓ Vuoi consegnare la prova?")
+    if st.button("Sì, CONSEGNA"):
+        st.session_state.fase = "CONCLUSIONE"; st.rerun()
+    if st.button("No, CONTINUA"):
+        st.session_state.fase = "PROVA"; st.rerun()
     st.stop()
 
-# --- LAYOUT TEST ---
-t1, t2 = st.columns([7, 3])
-with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
-with t2: mostra_timer()
-st.markdown("---")
+if st.session_state.fase == "CONCLUSIONE":
+    st.title("🏆 AlPaTest")
+    st.success("### Test terminato!")
+    if st.button("Ricomincia"):
+        st.session_state.fase = "PROVA"
+        st.session_state.df_filtrato = pd.DataFrame()
+        st.rerun()
+    st.stop()
 
-col_sx, col_centro, col_dx = st.columns([2.5, 6.5, 3.2])
+# --- SCHERMATA TEST ---
+st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
+st.divider()
+
+col_sx, col_ct, col_dx = st.columns([2, 6, 3.5])
 
 with col_sx:
     st.write("### Domande")
     if not st.session_state.df_filtrato.empty:
         lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
-        sel = st.radio("Domande", lista, index=st.session_state.indice, label_visibility="collapsed", key="nav_radio")
+        sel = st.radio("Seleziona", lista, index=st.session_state.indice, key="nav_radio")
         st.session_state.indice = lista.index(sel)
 
-with col_centro:
+with col_ct:
     if not st.session_state.df_filtrato.empty:
         idx = st.session_state.indice
         q = st.session_state.df_filtrato.iloc[idx]
         st.markdown(f'<div class="quesito-style">{idx+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
         
-        if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
-            path_img = os.path.join("immagini", str(q['Immagine']).strip())
-            if os.path.exists(path_img): st.image(path_img, width=450)
-        
         opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
-        ans_prec = st.session_state.risposte_date.get(idx)
-        idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
-        def salva_r():
-            chiave = f"r_{st.session_state.indice}"
-            if chiave in st.session_state: st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
+        # Gestione risposta
+        r_precedente = st.session_state.risposte_date.get(idx)
+        idx_r = ["A","B","C","D"].index(r_precedente) if r_precedente else None
+        
+        def salva_risposta():
+            scelta = st.session_state[f"r_{idx}"]
+            st.session_state.risposte_date[idx] = scelta[0]
 
-        st.radio("Risposte", opts, key=f"r_{idx}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+        st.radio("Risposta:", opts, index=idx_r, key=f"r_{idx}", on_change=salva_risposta)
         
-        st.write("---")
+        st.divider()
         c1, c2, c3 = st.columns(3)
-        if c1.button("⬅️ Prec"): st.session_state.indice = max(0, idx-1); st.rerun()
-        if c2.button("🏁 CONSEGNA"): st.session_state.fase = "CONFERMA"; st.rerun()
-        if c3.button("Succ ➡️"): st.session_state.indice = min(len(st.session_state.df_filtrato)-1, idx+1); st.rerun()
+        if c1.button("⬅️ Prec"):
+            st.session_state.indice = max(0, idx-1); st.rerun()
+        if c2.button("🏁 CONSEGNA", type="primary"):
+            st.session_state.fase = "CONFERMA"; st.rerun()
+        if c3.button("Succ ➡️"):
+            st.session_state.indice = min(len(st.session_state.df_filtrato)-1, idx+1); st.rerun()
     else:
-        st.info("Configura a destra e premi Importa")
+        st.info("Configura le discipline e importa i quesiti.")
 
 with col_dx:
-    st.markdown('<p style="background:white; color:black; text-align:center; font-weight:bold; border-radius:5px;">Discipline</p>', unsafe_allow_html=True)
+    st.markdown("### Discipline")
     if st.session_state.dict_discipline:
         for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
             st.write(f"**{testo}**")
-            c1, c2 = st.columns(2)
-            # Rimosso l'assegnazione manuale a st.session_state, lasciamo che sia il widget a gestire la chiave
-            c1.text_input("D", key=f"da_{i}", label_visibility="collapsed")
-            c2.text_input("A", key=f"a_{i}", label_visibility="collapsed")
-    st.checkbox("Simulazione (30 min)", key="simulazione")
-    st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
+            c_a, c_b = st.columns(2)
+            c_a.text_input("Da", key=f"da_{i}")
+            c_b.text_input("A", key=f"a_{i}")
+    st.button("📥 Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
