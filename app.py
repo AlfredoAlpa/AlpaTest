@@ -78,9 +78,19 @@ if 'start_time' not in st.session_state: st.session_state.start_time = None
 
 # --- FUNZIONI ---
 def display_pdf(file_path):
+    """Visualizzatore PDF con fallback per Chrome"""
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+    
+    # Utilizziamo l'oggetto <embed> che Chrome gestisce meglio per i PDF in base64
+    pdf_display = f'''
+        <embed
+            src="data:application/pdf;base64,{base64_pdf}"
+            width="100%"
+            height="800"
+            type="application/pdf"
+        >
+    '''
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 def pulisci_testo(testo):
@@ -103,7 +113,7 @@ def calcola_risultati():
 def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
-    lu = 100 # LARGHEZZA UTILE ALFREDO3
+    lu = 100
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(lu, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     for i, row in st.session_state.df_filtrato.iterrows():
@@ -152,14 +162,15 @@ with col_sx:
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
             sel = st.radio("L", lista, index=st.session_state.indice, key=f"n_{st.session_state.indice}", label_visibility="collapsed")
             st.session_state.indice = lista.index(sel)
-            st.session_state.pdf_selezionato = None # Reset se clicchi domanda
+            # Se l'utente clicca su una domanda, il PDF si chiude
+            if st.button("Vai alla domanda", use_container_width=True):
+                 st.session_state.pdf_selezionato = None
     
     st.write("---")
     with st.expander("📚 DISPENSE DI STUDIO", expanded=True):
         cod_immesso = st.text_input("Codice + INVIO:", key="cod_dispensa", type="password").strip()
         if cod_immesso != "" and cod_immesso in st.session_state.codici_dispense:
             st.success("Sbloccato!")
-            # LETTURA DINAMICA CARTELLA
             if os.path.exists("dispense"):
                 files = [f for f in os.listdir("dispense") if f.endswith(".pdf")]
                 files.sort()
@@ -167,25 +178,33 @@ with col_sx:
                 if scelta != "-- Scegli --":
                     if st.button("📖 LEGGI ORA", use_container_width=True):
                         st.session_state.pdf_selezionato = scelta
-                    st.download_button("⬇️ SCARICA PDF", data=open(os.path.join("dispense", scelta), "rb"), file_name=scelta, use_container_width=True)
+                        st.rerun() # Forza il ricaricamento per mostrare il PDF
+                    with open(os.path.join("dispense", scelta), "rb") as f:
+                        st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, use_container_width=True)
         elif cod_immesso != "": st.error("Codice errato")
 
 with col_centro:
     # SEZIONE LETTURA PDF
     if st.session_state.pdf_selezionato:
         st.markdown(f"### 📖 Lettura: {st.session_state.pdf_selezionato}")
-        if st.button("🔙 TORNA AL QUIZ"):
+        if st.button("🔙 CHIUDI E TORNA AL QUIZ", type="primary"):
             st.session_state.pdf_selezionato = None
             st.rerun()
-        display_pdf(os.path.join("dispense", st.session_state.pdf_selezionato))
+        
+        percorso_pdf = os.path.join("dispense", st.session_state.pdf_selezionato)
+        if os.path.exists(percorso_pdf):
+            display_pdf(percorso_pdf)
+        else:
+            st.error("File non trovato.")
     
     # SEZIONE QUIZ
     elif not st.session_state.df_filtrato.empty:
         q = st.session_state.df_filtrato.iloc[st.session_state.indice]
         st.markdown(f'<div class="quesito-style">{st.session_state.indice + 1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
         if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
-            if os.path.exists(os.path.join("immagini", str(q['Immagine']))):
-                st.image(os.path.join("immagini", str(q['Immagine'])), width=450)
+            img_path = os.path.join("immagini", str(q['Immagine']))
+            if os.path.exists(img_path):
+                st.image(img_path, width=450)
         
         opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
