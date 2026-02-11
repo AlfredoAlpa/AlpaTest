@@ -31,7 +31,7 @@ if not st.session_state.autenticato:
     with st.container():
         st.markdown('<span class="titolo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
         st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
-        codice = st.text_input("", type="password", label_visibility="collapsed").strip()
+        codice = st.text_input("", type="password", label_visibility="collapsed", key="login_widget").strip()
         if st.button("ENTRA"):
             if codice.lower() in ["open", "studente01"]:
                 st.session_state.autenticato = True
@@ -111,9 +111,10 @@ def importa_quesiti():
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
         frames = []
         for i in range(len(st.session_state.dict_discipline)):
+            # Leggiamo direttamente dai widget usando le chiavi
             d = st.session_state.get(f"da_{i}","")
             a = st.session_state.get(f"a_{i}","")
-            if d.isdigit() and a.isdigit():
+            if str(d).isdigit() and str(a).isdigit():
                 frames.append(df.iloc[int(d)-1 : int(a)])
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
@@ -168,33 +169,34 @@ with col_sx:
     st.write("### Domande")
     if not st.session_state.df_filtrato.empty:
         lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
-        sel = st.radio("Domande", lista, index=st.session_state.indice, label_visibility="collapsed")
+        sel = st.radio("Domande", lista, index=st.session_state.indice, label_visibility="collapsed", key="nav_radio")
         st.session_state.indice = lista.index(sel)
 
 with col_centro:
     if not st.session_state.df_filtrato.empty:
-        q = st.session_state.df_filtrato.iloc[st.session_state.indice]
-        st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
+        idx = st.session_state.indice
+        q = st.session_state.df_filtrato.iloc[idx]
+        st.markdown(f'<div class="quesito-style">{idx+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
         
         if pd.notna(q['Immagine']) and str(q['Immagine']).strip() != "":
             path_img = os.path.join("immagini", str(q['Immagine']).strip())
             if os.path.exists(path_img): st.image(path_img, width=450)
         
         opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
-        ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
+        ans_prec = st.session_state.risposte_date.get(idx)
         idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
         def salva_r():
             chiave = f"r_{st.session_state.indice}"
             if chiave in st.session_state: st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
 
-        st.radio("Risposte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+        st.radio("Risposte", opts, key=f"r_{idx}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
         st.write("---")
         c1, c2, c3 = st.columns(3)
-        if c1.button("⬅️ Prec"): st.session_state.indice = max(0, st.session_state.indice-1); st.rerun()
+        if c1.button("⬅️ Prec"): st.session_state.indice = max(0, idx-1); st.rerun()
         if c2.button("🏁 CONSEGNA"): st.session_state.fase = "CONFERMA"; st.rerun()
-        if c3.button("Succ ➡️"): st.session_state.indice = min(len(st.session_state.df_filtrato)-1, st.session_state.indice+1); st.rerun()
+        if c3.button("Succ ➡️"): st.session_state.indice = min(len(st.session_state.df_filtrato)-1, idx+1); st.rerun()
     else:
         st.info("Configura a destra e premi Importa")
 
@@ -204,7 +206,8 @@ with col_dx:
         for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
             st.write(f"**{testo}**")
             c1, c2 = st.columns(2)
-            st.session_state[f"da_{i}"] = c1.text_input("D", key=f"da_{i}", label_visibility="collapsed")
-            st.session_state[f"a_{i}"] = c2.text_input("A", key=f"a_{i}", label_visibility="collapsed")
+            # Rimosso l'assegnazione manuale a st.session_state, lasciamo che sia il widget a gestire la chiave
+            c1.text_input("D", key=f"da_{i}", label_visibility="collapsed")
+            c2.text_input("A", key=f"a_{i}", label_visibility="collapsed")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
