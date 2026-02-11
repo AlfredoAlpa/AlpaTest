@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import os
@@ -15,116 +14,98 @@ if 'autenticato' not in st.session_state:
 if not st.session_state.autenticato:
     st.markdown("""
         <style>
-        /* 1. CREIAMO LA CORNICE ATTORNO AL BLOCCO VERTICALE */
         [data-testid="stVerticalBlock"] > div:has(.titolo-box) {
             border: 3px solid #FFD700 !important;
             border-radius: 20px !important;
-            padding: 50px 20px !important; /* Spazio interno bilanciato */
+            padding: 50px 20px !important;
             background-color: rgba(0, 0, 0, 0.5) !important;
-            
-            /* ELASTICITÀ PER PC E CELLULARE */
             width: 95% !important;
             max-width: 550px !important;
             margin: 40px auto !important;
             text-align: center !important;
         }
-
-        /* 2. TITOLO E TESTI */
         .titolo-box {
             color: #FFD700 !important;
-            font-size: clamp(1.5rem, 6vw, 2.2rem) !important; /* Si adatta allo schermo */
+            font-size: clamp(1.6rem, 7vw, 2.3rem) !important; /* Ingrandito */
             font-weight: 900 !important;
             display: block !important;
             margin-bottom: 10px !important;
         }
-
         .istruzione-box {
             color: white !important;
-            font-size: 1.1rem !important;
+            font-size: 1.2rem !important; /* Ingrandito da 1.1 */
             display: block !important;
             margin-bottom: 25px !important;
         }
-
-        /* 3. CAMPO DI TESTO CENTRATO */
-        div[data-testid="stTextInput"] {
-            width: 80% !important;
-            margin: 0 auto !important;
-        }
-
-        /* 4. PULSANTE ENTRA */
+        div[data-testid="stTextInput"] label p { font-size: 1.1rem !important; }
         div.stButton > button {
             width: 160px !important;
             background-color: #FFD700 !important;
             color: black !important;
             font-weight: bold !important;
+            font-size: 1.1rem !important; /* Ingrandito */
             margin: 25px auto !important;
             display: block !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # USIAMO UN CONTAINER UNICO: Tutto quello che c'è dentro sarà risucchiato
     with st.container():
-        # Classe 'titolo-box' serve al CSS per capire quale blocco colorare
         st.markdown('<span class="titolo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
         st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
-        
         codice = st.text_input("", type="password", label_visibility="collapsed", key="login_v3").strip()
-        
         if st.button("ENTRA", key="btn_v3"):
             if codice.lower() in ["open", "studente01"]:
                 st.session_state.autenticato = True
                 st.rerun()
             else:
                 st.error("Codice errato")
-
-    st.stop()
-    # --- ELEMENTI DELLA PAGINA ---
-    st.markdown('<p class="centered-title">🔐 Accesso AlPaTest</p>', unsafe_allow_html=True)
-    
-    codice = st.text_input("Inserisci il codice di accesso:", type="password").strip()
-    
-    if st.button("Entra"):
-        if codice.lower() in ["open", "studente01"]:
-            st.session_state.autenticato = True
-            st.rerun()
-        else:
-            st.error("Codice errato")
     st.stop()
 
-# --- CSS GENERALE (Applicato dopo il login) ---
+# --- CSS GENERALE (Font aumentati di 1pt/0.1rem) ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .block-container { padding-top: 4rem !important; padding-bottom: 0rem !important; }
     .logo-style { 
         font-family: 'Georgia', serif; 
-        font-size: 3rem; 
+        font-size: 3.1rem; /* Ingrandito da 3 */
         font-weight: bold; 
         color: #FFD700; 
         text-shadow: 2px 2px 4px #000;
         line-height: 1.0; 
         margin-bottom: -10px; 
     }
-    .quesito-style { color: #FFEB3B !important; font-size: 1.5rem !important; font-weight: bold !important; line-height: 1.2; }
-    .stRadio label p { font-size: 1.2rem !important; color: #FFFFFF !important; font-weight: 500 !important; }
-    div[data-testid="stRadio"] > div { align-items: flex-start !important; color: white !important; }
-    .timer-style { font-size: 2.5rem; font-weight: bold; text-align: right; }
-    .stButton>button { height: 50px !important; font-weight: bold !important; }
-    .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; }
+    .quesito-style { 
+        color: #FFEB3B !important; 
+        font-size: 1.6rem !important; /* Ingrandito da 1.5 */
+        font-weight: bold !important; 
+        line-height: 1.2; 
+    }
+    /* Radio buttons (risposte e elenco) */
+    .stRadio label p { 
+        font-size: 1.3rem !important; /* Ingrandito da 1.2 */
+        color: #FFFFFF !important; 
+        font-weight: 500 !important; 
+    }
+    .timer-style { font-size: 2.6rem; font-weight: bold; text-align: right; } /* Ingrandito da 2.5 */
+    .stButton>button { height: 50px !important; font-size: 1.1rem !important; font-weight: bold !important; }
+    .risultato-box { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; color: white; border: 1px solid #FFD700; font-size: 1.1rem; }
+    
+    /* Testi piccoli di sistema */
+    p, span, label { font-size: 1.1rem !important; } 
+    .stAlert p { font-size: 1.0rem !important; } /* Ingrandito da 0.9 */
+    
     hr { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
-    .stAlert p { font-size: 0.9rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INIZIALIZZAZIONE ---
+# --- INIZIALIZZAZIONE (Invariata) ---
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 
-# --- CARICAMENTO DISCIPLINE DA EXCEL (Con pulizia nan) ---
 if 'dict_discipline' not in st.session_state:
     try:
         df_disc = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
-        # Rimuove righe vuote o con nan
         df_disc = df_disc.dropna(subset=['Codice', 'Disciplina'])
         st.session_state.dict_discipline = pd.Series(df_disc.Disciplina.values, index=df_disc.Codice).to_dict()
     except Exception as e:
@@ -136,7 +117,7 @@ if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
 
-# --- FUNZIONI ---
+# --- FUNZIONI (Invariate) ---
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
     repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
@@ -145,9 +126,7 @@ def pulisci_testo(testo):
     return t.encode('latin-1','replace').decode('latin-1')
 
 def calcola_risultati():
-    esatte = 0
-    errate = 0
-    non_date = 0
+    esatte, errate, non_date = 0, 0, 0
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i)
         r_e = str(row['Corretta']).strip()
@@ -162,7 +141,7 @@ def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
-    larghezza_utile = 100 
+    larghezza_utile = 190 
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(larghezza_utile, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
@@ -193,9 +172,8 @@ def importa_quesiti():
             st.session_state.punteggi["Non Data"] = float(df_p.iloc[0, 1])
             st.session_state.punteggi["Errata"] = float(df_p.iloc[0, 2])
         except:
-            st.warning("Foglio 'Punteggi' non trovato. Uso valori predefiniti.")
+            pass
         frames = []
-        # Legge fino a 9 righe (compatibile con la colonna dx)
         for i in range(len(st.session_state.dict_discipline)):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
             if d.isdigit() and a.isdigit():
@@ -219,7 +197,7 @@ def mostra_timer():
             st.session_state.fase = "CONCLUSIONE"
             st.rerun()
 
-# --- LOGICA NAVIGAZIONE ---
+# --- LOGICA NAVIGAZIONE (Invariata) ---
 if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
     st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
     if st.session_state.fase == "CONFERMA":
@@ -237,7 +215,7 @@ if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
         st.markdown(f"""
             <div class="risultato-box">
                 <h2>✅ Esame completato!</h2>
-                <p style="font-size:1.5rem;">Punteggio Totale: <b>{punti_tot}</b></p>
+                <p style="font-size:1.6rem;">Punteggio Totale: <b>{punti_tot}</b></p>
                 <p>Risposte Esatte: {esatte} | Errate: {errate} | Non date: {non_date}</p>
             </div>
         """, unsafe_allow_html=True)
@@ -259,7 +237,7 @@ st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1)'>", unsafe_allow_
 col_sx, col_centro, col_dx = st.columns([2.8, 7, 3.2])
 
 with col_sx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Elenco domande</p>', unsafe_allow_html=True)
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:5px;margin-bottom:10px;font-size:1.1rem;">Elenco domande</p>', unsafe_allow_html=True)
     if not st.session_state.df_filtrato.empty:
         with st.container(height=550, border=False):
             lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
@@ -279,8 +257,6 @@ with col_centro:
                 sx, centro, dx = st.columns([1, 4, 1]) 
                 with centro:
                     st.image(percorso_img, use_container_width=True)
-            else:
-                st.info(f"Immagine {img_nome} non trovata.")
         
         opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
@@ -310,52 +286,19 @@ with col_centro:
         st.markdown("<h2 style='color:white;text-align:center;'><br>Configura e premi Importa</h2>", unsafe_allow_html=True)
 
 with col_dx:
-    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:3px;margin-bottom:10px;">Discipline e Gruppi</p>', unsafe_allow_html=True)
-    
+    st.markdown('<p style="background:#FFFFFF;color:black;text-align:center;font-weight:bold;border-radius:5px;padding:5px;margin-bottom:10px;font-size:1.1rem;">Discipline e Gruppi</p>', unsafe_allow_html=True)
     if st.session_state.dict_discipline:
-        # Mostriamo fino a 9 righe basandoci sulle chiavi del dizionario caricato
         chiavi = list(st.session_state.dict_discipline.keys())[:9]
-        
         for i, cod in enumerate(chiavi):
             testo = st.session_state.dict_discipline[cod]
-            # Colonne: testo largo, input "Da" stretto, input "A" stretto
             c1, c2, c3 = st.columns([6, 2, 2])
-            
             with c1:
-                st.markdown(f"<p style='font-size:0.85rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
-            
+                st.markdown(f"<p style='font-size:0.95rem; color:white; margin-top:5px; line-height:1.2;'><b>{cod}</b>: {testo}</p>", unsafe_allow_html=True)
             with c2:
                 st.text_input("Dal", key=f"da_{i}", placeholder="Da", label_visibility="collapsed", max_chars=6)
-            
             with c3:
                 st.text_input("Al", key=f"a_{i}", placeholder="A", label_visibility="collapsed", max_chars=6)
     
     st.write("---")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True, disabled=not st.session_state.df_filtrato.empty)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
