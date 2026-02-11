@@ -82,15 +82,14 @@ def display_pdf_safe(file_path):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
     
-    # Usiamo <object> con un'altezza fissa e parametri toolbar
     pdf_display = f'''
         <object data="data:application/pdf;base64,{base64_pdf}#toolbar=1" type="application/pdf" width="100%" height="850px">
             <div style="background:white; color:black; padding:30px; text-align:center; border-radius:10px;">
-                <h4>Il visualizzatore è bloccato da Chrome</h4>
-                <p>Usa il tasto qui sotto per scaricare e leggere il file:</p>
+                <h4>Visualizzazione non supportata direttamente</h4>
+                <p>Chrome ha bloccato l'anteprima. Clicca qui sotto per leggere:</p>
                 <a href="data:application/pdf;base64,{base64_pdf}" download="dispensa.pdf" 
                    style="background-color:#FFD700; color:black; padding:10px 20px; text-decoration:none; font-weight:bold; border-radius:5px;">
-                   ⬇️ SCARICA E LEGGI
+                   ⬇️ APRI DISPENSA
                 </a>
             </div>
         </object>
@@ -146,7 +145,7 @@ def importa_quesiti():
 
 @st.fragment(run_every=1)
 def mostra_timer():
-    if st.session_time := st.session_state.start_time and st.session_state.get("simulazione", False):
+    if st.session_state.start_time is not None and st.session_state.get("simulazione", False):
         rimanente = max(0, 1800 - (time.time() - st.session_state.start_time))
         m, s = int(rimanente // 60), int(rimanente % 60)
         st.markdown(f'<p class="timer-style" style="color:#00FF00">⏱️ {m:02d}:{s:02d}</p>', unsafe_allow_html=True)
@@ -172,7 +171,6 @@ with col_sx:
         cod_immesso = st.text_input("Codice + INVIO:", key="cod_dispensa", type="password").strip()
         if cod_immesso != "" and cod_immesso in st.session_state.codici_dispense:
             st.success("Sbloccato!")
-            # CERCHIAMO NELLA CARTELLA STATIC (ex dispense)
             cartella = "static" if os.path.exists("static") else "dispense"
             if os.path.exists(cartella):
                 files = [f for f in os.listdir(cartella) if f.endswith(".pdf")]
@@ -183,7 +181,7 @@ with col_sx:
                         st.session_state.pdf_selezionato = scelta
                         st.rerun()
                     with open(os.path.join(cartella, scelta), "rb") as f:
-                        st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, use_container_width=True)
+                        st.download_button("⬇️ SCARICA PDF", data=f, file_name=scelta, key=f"dl_{scelta}", use_container_width=True)
         elif cod_immesso != "": st.error("Codice errato")
 
 with col_centro:
@@ -208,7 +206,7 @@ with col_centro:
             if os.path.exists(img_path):
                 st.image(img_path, width=450)
         
-        opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_B']}", f"D) {q['opz_D']}"]
+        opts = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
         ans_prec = st.session_state.risposte_date.get(st.session_state.indice)
         idx_prec = ["A","B","C","D"].index(ans_prec) if ans_prec in ["A","B","C","D"] else None
         
