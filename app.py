@@ -31,8 +31,8 @@ if not st.session_state.autenticato:
     with st.container():
         st.markdown('<span class="titolo-box">🔐 Accesso AlPaTest</span>', unsafe_allow_html=True)
         st.markdown('<span class="istruzione-box">Inserisci il codice di accesso:</span>', unsafe_allow_html=True)
-        codice = st.text_input("", type="password", label_visibility="collapsed", key="login_main").strip()
-        if st.button("ENTRA", key="btn_login"):
+        codice = st.text_input("", type="password", label_visibility="collapsed").strip()
+        if st.button("ENTRA"):
             if codice.lower() in ["open", "studente01"]:
                 st.session_state.autenticato = True
                 st.rerun()
@@ -113,7 +113,7 @@ def importa_quesiti():
         for i in range(len(st.session_state.dict_discipline)):
             d = st.session_state.get(f"da_{i}","")
             a = st.session_state.get(f"a_{i}","")
-            if str(d).isdigit() and str(a).isdigit():
+            if d.isdigit() and a.isdigit():
                 frames.append(df.iloc[int(d)-1 : int(a)])
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
@@ -150,7 +150,7 @@ if st.session_state.fase in ["CONFERMA", "CONCLUSIONE"]:
         esatte, errate, non_date, punti_tot = calcola_risultati()
         st.markdown(f'<div class="risultato-box"><h2>✅ Completato! Punti: {punti_tot}</h2></div>', unsafe_allow_html=True)
         st.download_button("📩 REPORT", data=genera_report_pdf(), file_name="esito.pdf")
-        if st.button("Torna Home"):
+        if st.button("Nuovo Test"):
              st.session_state.fase = "PROVA"
              st.session_state.df_filtrato = pd.DataFrame()
              st.rerun()
@@ -162,13 +162,13 @@ with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html
 with t2: mostra_timer()
 st.markdown("---")
 
-col_sx, col_centro, col_dx = st.columns([2.5, 6.5, 3])
+col_sx, col_centro, col_dx = st.columns([2.5, 6.5, 3.2])
 
 with col_sx:
-    st.write("### Navigazione")
+    st.write("### Domande")
     if not st.session_state.df_filtrato.empty:
         lista = [f"{'✓' if i in st.session_state.risposte_date else '  '} Quesito {i+1}" for i in range(len(st.session_state.df_filtrato))]
-        sel = st.radio("L", lista, index=st.session_state.indice, label_visibility="collapsed", key="nav_main")
+        sel = st.radio("Domande", lista, index=st.session_state.indice, label_visibility="collapsed")
         st.session_state.indice = lista.index(sel)
 
 with col_centro:
@@ -188,7 +188,7 @@ with col_centro:
             chiave = f"r_{st.session_state.indice}"
             if chiave in st.session_state: st.session_state.risposte_date[st.session_state.indice] = st.session_state[chiave][0]
 
-        st.radio("S", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
+        st.radio("Risposte", opts, key=f"r_{st.session_state.indice}", index=idx_prec, on_change=salva_r, label_visibility="collapsed")
         
         st.write("---")
         c1, c2, c3 = st.columns(3)
@@ -199,12 +199,12 @@ with col_centro:
         st.info("Configura a destra e premi Importa")
 
 with col_dx:
-    st.markdown('<p style="background:white; color:black; text-align:center; font-weight:bold; border-radius:5px; padding:3px;">Discipline</p>', unsafe_allow_html=True)
+    st.markdown('<p style="background:white; color:black; text-align:center; font-weight:bold; border-radius:5px;">Discipline</p>', unsafe_allow_html=True)
     if st.session_state.dict_discipline:
         for i, (cod, testo) in enumerate(st.session_state.dict_discipline.items()):
             st.write(f"**{testo}**")
             c1, c2 = st.columns(2)
-            st.session_state[f"da_{i}"] = c1.text_input("D", key=f"in_da_{i}", label_visibility="collapsed")
-            st.session_state[f"a_{i}"] = c2.text_input("A", key=f"in_a_{i}", label_visibility="collapsed")
+            st.session_state[f"da_{i}"] = c1.text_input("D", key=f"da_{i}", label_visibility="collapsed")
+            st.session_state[f"a_{i}"] = c2.text_input("A", key=f"a_{i}", label_visibility="collapsed")
     st.checkbox("Simulazione (30 min)", key="simulazione")
     st.button("Importa Quesiti", on_click=importa_quesiti, use_container_width=True)
