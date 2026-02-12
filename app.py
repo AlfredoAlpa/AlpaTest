@@ -14,11 +14,18 @@ st.markdown("""
     .logo-style { font-family: 'Georgia', serif; font-size: 3.2rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
     .quesito-style { color: #FFEB3B !important; font-size: 1.7rem !important; font-weight: bold !important; }
     .timer-style { font-size: 2.7rem; font-weight: bold; text-align: right; color: #00FF00; }
-    .nome-materia { font-size: 0.95rem !important; color: white !important; font-weight: 500; }
+    .nome-materia { font-size: 0.95rem !important; color: white !important; font-weight: 500; margin-bottom: 2px; }
     .report-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #FFD700; }
     hr { border-color: rgba(255,255,255,0.1); }
-    /* Stile per le etichette Da/A */
-    .label-da-a { color: #FFD700; font-size: 0.8rem; font-weight: bold; margin-bottom: -15px; }
+    
+    /* CORREZIONE ETICHETTE DA/A */
+    .label-da-a { 
+        color: #FFD700; 
+        font-size: 0.85rem; 
+        font-weight: bold; 
+        margin-bottom: -10px; 
+        margin-top: 5px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -95,7 +102,7 @@ if not st.session_state.autenticato:
         else: st.error("Codice errato")
     st.stop()
 
-# --- CARICAMENTO DISCIPLINE ---
+# --- CARICAMENTO RISORSE ---
 @st.cache_data
 def carica_discipline():
     try:
@@ -182,7 +189,6 @@ else:
                         st.session_state.indice = i; st.rerun()
         st.write("---")
         with st.expander("📚 DISPENSE", expanded=True):
-            # Punto 3: Memoria del codice
             if st.session_state.codice_dispense_valido == "":
                 cod_s = st.text_input("Codice sblocco:", type="password")
                 if cod_s in codici_dispense:
@@ -191,7 +197,6 @@ else:
             
             if st.session_state.codice_dispense_valido != "":
                 try:
-                    # Punto 2: Gestione errore database con retry
                     df_on = pd.read_csv(SHEET_URL)
                     titoli = df_on.iloc[:, 1].dropna().tolist()
                     sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
@@ -199,7 +204,7 @@ else:
                         st.session_state.pdf_id_selezionato = str(df_on[df_on.iloc[:,1] == sel].iloc[0, 2]).strip()
                         st.rerun()
                 except:
-                    st.warning("Caricamento database... clicca di nuovo su Apri se non vedi l'elenco.")
+                    st.warning("Database momentaneamente occupato. Riprova tra un istante.")
 
     with c_ct:
         if not st.session_state.df_filtrato.empty:
@@ -214,7 +219,7 @@ else:
             if b1.button("⬅️ PREC.") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
             if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
             if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
-        else: st.info("Configura gli intervalli a destra")
+        else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
 
     with c_dx:
         st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
@@ -223,7 +228,6 @@ else:
             nome_mat = dict_discipline.get(cod_mat, f"Gruppo {i+1}")
             st.markdown(f"<p class='nome-materia'>{cod_mat}: {nome_mat}</p>", unsafe_allow_html=True)
             c_d, c_a = st.columns(2)
-            # Punto 1: Etichette Da/A inserite
             c_d.markdown('<p class="label-da-a">Da:</p>', unsafe_allow_html=True)
             c_d.text_input("da", key=f"da_{i}", label_visibility="collapsed")
             c_a.markdown('<p class="label-da-a">A:</p>', unsafe_allow_html=True)
