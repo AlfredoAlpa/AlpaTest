@@ -71,18 +71,18 @@ def genera_report_pdf():
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
     pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(190, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
+    pdf.cell(100, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
     pdf.set_font("helvetica", 'B', 12)
-    pdf.cell(190, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
+    pdf.cell(100, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.ln(10)
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
         pdf.set_font("helvetica", 'B', 11)
-        pdf.multi_cell(190, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
+        pdf.multi_cell(100, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
         pdf.set_font("helvetica", '', 11)
-        pdf.multi_cell(190, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
+        pdf.multi_cell(100, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(5) 
@@ -237,4 +237,5 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
