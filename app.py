@@ -18,7 +18,7 @@ st.markdown("""
     .report-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #FFD700; }
     hr { border-color: rgba(255,255,255,0.1); }
     
-   /* NUOVA SOLUZIONE ETICHETTE DA/A */
+  /* NUOVA SOLUZIONE ETICHETTE DA/A */
     .label-da-a { 
         color: #FFD700; 
         font-size: 13px !important; 
@@ -27,6 +27,19 @@ st.markdown("""
         z-index: 999;
         top: 10px;
         margin-bottom: 0px !important;
+    }
+
+    /* CASELLE NERE PIÙ SOTTILI */
+    div[data-testid="stTextInput"] div[data-baseweb="input"] {
+        min-height: 28px !important;
+        height: 28px !important;
+        background-color: black !important;
+    }
+
+    div[data-testid="stTextInput"] input {
+        padding: 0px 10px !important;
+        font-size: 0.85rem !important;
+        height: 28px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -237,5 +250,6 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
