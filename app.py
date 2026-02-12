@@ -228,7 +228,8 @@ else:
             
             # --- AGGIUNTA PER MOSTRARE L'IMMAGINE ---
             if pd.notna(q.get('Immagine')) and str(q['Immagine']).strip() != "":
-                percorso_img = str(q['Immagine']).strip()
+                nome_file = str(q['Immagine']).strip()
+                percorso_img = os.path.join(os.path.dirname(__file__), nome_file)
                 if os.path.exists(percorso_img):
                     st.image(percorso_img, width=450)
                 else:
@@ -260,6 +261,7 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
