@@ -221,10 +221,20 @@ else:
                 except:
                     st.warning("Database momentaneamente occupato. Riprova tra un istante.")
 
-    with c_ct:
+   with c_ct:
         if not st.session_state.df_filtrato.empty:
             q = st.session_state.df_filtrato.iloc[st.session_state.indice]
             st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
+            
+            # --- AGGIUNTA PER MOSTRARE L'IMMAGINE ---
+            if pd.notna(q.get('Immagine')) and str(q['Immagine']).strip() != "":
+                percorso_img = str(q['Immagine']).strip()
+                if os.path.exists(percorso_img):
+                    st.image(percorso_img, width=450) # Larghezza regolata per non essere troppo ingombrante
+                else:
+                    st.error(f"File immagine non trovato: {percorso_img}")
+            # ----------------------------------------
+
             opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
             idx_sel = ["A","B","C","D"].index(st.session_state.risposte_date.get(st.session_state.indice)) if st.session_state.risposte_date.get(st.session_state.indice) else None
             scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
@@ -250,6 +260,7 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
