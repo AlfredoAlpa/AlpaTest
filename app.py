@@ -243,12 +243,31 @@ else:
             scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
             if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
             st.write("---")
+            
             b1, b2, b3 = st.columns(3)
             if b1.button("⬅️ PREC.") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
             if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
             if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
-        else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
 
+            # --- AGGIUNTA TASTO HELP ---
+            st.write("") 
+            with st.expander("💡 HAI BISOGNO DI AIUTO?"):
+                st.info("Consulta la spiegazione nel manuale qui sotto:")
+                percorso_help = os.path.join(os.path.dirname(__file__), "help.pdf")
+                if os.path.exists(percorso_help):
+                    with open(percorso_help, "rb") as f:
+                        st.download_button(
+                            label="📖 APRI IL MANUALE HELP (PDF)",
+                            data=f,
+                            file_name="aiuto_quesiti.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                else:
+                    st.error("Il file help.pdf non è stato trovato nella cartella principale.")
+            # ---------------------------
+
+        else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
     with c_dx:
         st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
         for i in range(9):
@@ -263,6 +282,7 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
