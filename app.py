@@ -9,7 +9,6 @@ st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 st.markdown("""
     <style>
-    /* Larghezza Utile: rimuove i margini laterali */
     [data-testid="stAppViewBlockContainer"] { padding-left: 2rem !important; padding-right: 2rem !important; max-width: 100% !important; }
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .logo-style { font-family: 'Georgia', serif; font-size: 3.2rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
@@ -18,6 +17,8 @@ st.markdown("""
     .nome-materia { font-size: 0.95rem !important; color: white !important; font-weight: 500; }
     .report-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #FFD700; }
     hr { border-color: rgba(255,255,255,0.1); }
+    /* Stile per le etichette Da/A */
+    .label-da-a { color: #FFD700; font-size: 0.8rem; font-weight: bold; margin-bottom: -15px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -34,8 +35,9 @@ if 'indice' not in st.session_state: st.session_state.indice = 0
 if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
+if 'codice_dispense_valido' not in st.session_state: st.session_state.codice_dispense_valido = ""
 
-# --- FUNZIONI REPORT (Logica Alfredo2) ---
+# --- FUNZIONI REPORT ---
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
     repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
@@ -60,20 +62,18 @@ def genera_report_pdf():
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
     pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(100, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
+    pdf.cell(190, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
     pdf.set_font("helvetica", 'B', 12)
-    pdf.cell(100, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
-    pdf.set_font("helvetica", '', 10)
-    pdf.cell(100, 6, pulisci_testo(f"Esatte: {esatte} | Errate: {errate} | Non date: {non_date}"), ln=True, align='C')
+    pdf.cell(190, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.ln(10)
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
         pdf.set_font("helvetica", 'B', 11)
-        pdf.multi_cell(100, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
+        pdf.multi_cell(190, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
         pdf.set_font("helvetica", '', 11)
-        pdf.multi_cell(100, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
+        pdf.multi_cell(190, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(5) 
@@ -106,6 +106,15 @@ def carica_discipline():
 
 dict_discipline = carica_discipline()
 
+@st.cache_data
+def carica_codici_dispense():
+    try:
+        df_cod = pd.read_excel("quiz.xlsx", sheet_name="Dispensecod", header=None)
+        return [str(x).strip() for x in df_cod[0].dropna().tolist()]
+    except: return []
+
+codici_dispense = carica_codici_dispense()
+
 def importa_quesiti():
     try:
         df = pd.read_excel("quiz.xlsx", sheet_name=0)
@@ -128,11 +137,7 @@ def importa_quesiti():
 def mostra_timer():
     if st.session_state.start_time and st.session_state.get("simulazione", False):
         rimanente = max(0, 1800 - (time.time() - st.session_state.start_time))
-        minuti, secondi = int(rimanente // 60), int(rimanente % 60)
-        st.markdown(f'<p class="timer-style">⏱️ {minuti:02d}:{secondi:02d}</p>', unsafe_allow_html=True)
-        if rimanente <= 0:
-            st.session_state.fase = "FINE"
-            st.rerun()
+        st.markdown(f'<p class="timer-style">⏱️ {int(rimanente//60):02d}:{int(rimanente%60):02d}</p>', unsafe_allow_html=True)
 
 # --- HEADER ---
 t1, t2 = st.columns([7, 3])
@@ -152,29 +157,18 @@ elif st.session_state.fase == "FINE":
     es, er, nd, pt = calcola_risultati()
     st.markdown("## 📊 Risultato Finale")
     st.success(f"### Punteggio Totale: {pt}")
-    st.write(f"Esatte: {es} | Errate: {er} | Non date: {nd}")
-    
     c_pdf, c_new = st.columns(2)
     with c_pdf:
-        pdf_file = genera_report_pdf()
-        st.download_button("📥 SCARICA REPORT PDF", pdf_file, "Report_AlPaTest.pdf", "application/pdf")
+        st.download_button("📥 SCARICA REPORT PDF", genera_report_pdf(), "Report_AlPaTest.pdf", "application/pdf")
     with c_new:
         if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): 
-            st.session_state.clear()
-            st.rerun()
-    
+            st.session_state.clear(); st.rerun()
     st.write("---")
     for i, row in st.session_state.df_filtrato.iterrows():
         tua = st.session_state.risposte_date.get(i, "N.D.")
         corr = str(row['Corretta']).strip()
         colore = "#00FF00" if tua == corr else "#FF4B4B"
-        st.markdown(f"""
-            <div class="report-card">
-                <p style="color:{colore}; font-weight:bold;">Quesito {i+1}</p>
-                <p>{row['Domanda']}</p>
-                <p>Tua risposta: <b>{tua}</b> | Risposta corretta: <b>{corr}</b></p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="report-card"><p style="color:{colore}; font-weight:bold;">Quesito {i+1}</p><p>{row["Domanda"]}</p><p>Tua: {tua} | Corr: {corr}</p></div>', unsafe_allow_html=True)
 
 else:
     c_sx, c_ct, c_dx = st.columns([2.8, 7, 3.2])
@@ -188,49 +182,52 @@ else:
                         st.session_state.indice = i; st.rerun()
         st.write("---")
         with st.expander("📚 DISPENSE", expanded=True):
-            cod_s = st.text_input("Codice sblocco:", type="password")
-            if cod_s != "":
+            # Punto 3: Memoria del codice
+            if st.session_state.codice_dispense_valido == "":
+                cod_s = st.text_input("Codice sblocco:", type="password")
+                if cod_s in codici_dispense:
+                    st.session_state.codice_dispense_valido = cod_s
+                    st.rerun()
+            
+            if st.session_state.codice_dispense_valido != "":
                 try:
+                    # Punto 2: Gestione errore database con retry
                     df_on = pd.read_csv(SHEET_URL)
                     titoli = df_on.iloc[:, 1].dropna().tolist()
                     sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
                     if sel != "--" and st.button("📖 APRI DISPENSA"):
                         st.session_state.pdf_id_selezionato = str(df_on[df_on.iloc[:,1] == sel].iloc[0, 2]).strip()
                         st.rerun()
-                except: st.error("Accesso al database fallito")
+                except:
+                    st.warning("Caricamento database... clicca di nuovo su Apri se non vedi l'elenco.")
 
     with c_ct:
         if not st.session_state.df_filtrato.empty:
             q = st.session_state.df_filtrato.iloc[st.session_state.indice]
             st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
             opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
-            resp_precedente = st.session_state.risposte_date.get(st.session_state.indice)
-            idx_sel = ["A","B","C","D"].index(resp_precedente) if resp_precedente else None
-            
-            scelta_utente = st.radio("Seleziona la risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
-            if scelta_utente: st.session_state.risposte_date[st.session_state.indice] = scelta_utente[0]
-            
+            idx_sel = ["A","B","C","D"].index(st.session_state.risposte_date.get(st.session_state.indice)) if st.session_state.risposte_date.get(st.session_state.indice) else None
+            scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
+            if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
             st.write("---")
             b1, b2, b3 = st.columns(3)
-            if b1.button("⬅️ PRECEDENTE") and st.session_state.indice > 0:
-                st.session_state.indice -= 1; st.rerun()
-            if b2.button("🏁 CONSEGNA PROVA"):
-                st.session_state.fase = "FINE"; st.rerun()
-            if b3.button("SUCCESSIVO ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1:
-                st.session_state.indice += 1; st.rerun()
-        else: st.info("Configura gli intervalli sulla destra e clicca su 'IMPORTA QUESITI'")
+            if b1.button("⬅️ PREC.") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
+            if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
+            if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
+        else: st.info("Configura gli intervalli a destra")
 
     with c_dx:
         st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
         for i in range(9):
             cod_mat = list(dict_discipline.keys())[i] if i < len(dict_discipline) else f"G{i+1}"
             nome_mat = dict_discipline.get(cod_mat, f"Gruppo {i+1}")
-            c_m, c_d, c_a = st.columns([5, 2.5, 2.5])
-            c_m.markdown(f"<p class='nome-materia'>{cod_mat}: {nome_mat}</p>", unsafe_allow_html=True)
-            c_d.text_input("Da", key=f"da_{i}", label_visibility="collapsed")
-            c_a.text_input("A", key=f"a_{i}", label_visibility="collapsed")
+            st.markdown(f"<p class='nome-materia'>{cod_mat}: {nome_mat}</p>", unsafe_allow_html=True)
+            c_d, c_a = st.columns(2)
+            # Punto 1: Etichette Da/A inserite
+            c_d.markdown('<p class="label-da-a">Da:</p>', unsafe_allow_html=True)
+            c_d.text_input("da", key=f"da_{i}", label_visibility="collapsed")
+            c_a.markdown('<p class="label-da-a">A:</p>', unsafe_allow_html=True)
+            c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed")
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
-
-
