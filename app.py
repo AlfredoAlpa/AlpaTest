@@ -250,32 +250,15 @@ else:
             if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
             if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
 
-            # --- AGGIUNTA TASTO HELP (VISUALIZZAZIONE INTERNA) ---
+            # --- AGGIUNTA TASTO HELP (VERSIONE GOOGLE DRIVE) ---
             st.write("") 
             with st.expander("💡 HAI BISOGNO DI AIUTO?"):
-                percorso_help = os.path.join(os.path.dirname(__file__), "help.pdf")
-                if os.path.exists(percorso_help):
-                    try:
-                        with open(percorso_help, "rb") as f:
-                            dati_pdf = f.read()
-                            base64_pdf = base64.b64encode(dati_pdf).decode('utf-8')
-                        
-                        # Finestra interna per visualizzare il PDF direttamente
-                        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-                        st.markdown(pdf_display, unsafe_allow_html=True)
-                        
-                        # Pulsante di riserva per scaricarlo o aprirlo esternamente
-                        st.download_button(
-                            label="📥 Scarica o apri in un'altra finestra",
-                            data=dati_pdf,
-                            file_name="aiuto_quesiti.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                    except Exception as e:
-                        st.error(f"Errore nella lettura del file: {e}")
-                else:
-                    st.error("Il file help.pdf non è stato trovato nella cartella principale.")
+                # Link diretto al tuo file su Drive con finale /preview
+                url_help_drive = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview"
+                
+                # Visualizzazione identica alle dispense
+                pdf_display = f'<iframe src="{url_help_drive}" width="100%" height="600" allow="autoplay"></iframe>'
+                st.markdown(pdf_display, unsafe_allow_html=True)
             # -----------------------------------------------------
 
         else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
@@ -293,6 +276,7 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
