@@ -250,17 +250,18 @@ else:
             if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
             if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
 
-            # --- AGGIUNTA TASTO HELP (VERSIONE GOOGLE DRIVE) ---
+            # --- AGGIUNTA TASTO HELP (CON CONTROLLI GOOGLE ATTIVI) ---
             st.write("") 
             with st.expander("💡 HAI BISOGNO DI AIUTO?"):
-                # Link diretto al tuo file su Drive con finale /preview
-                url_help_drive = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview"
+                # Usiamo un link che forza la visualizzazione della barra strumenti
+                url_help_full = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
                 
-                # Visualizzazione identica alle dispense
-                pdf_display = f'<iframe src="{url_help_drive}" width="100%" height="600" allow="autoplay"></iframe>'
+                # Visualizzazione con altezza leggermente maggiore per far stare i controlli
+                pdf_display = f'<iframe src="{url_help_full}" width="100%" height="700" allow="autoplay"></iframe>'
                 st.markdown(pdf_display, unsafe_allow_html=True)
+                
+                st.caption("Usa la freccetta in alto a destra nel riquadro per ingrandire.")
             # -----------------------------------------------------
-
         else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
     with c_dx:
         st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
@@ -276,6 +277,7 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
