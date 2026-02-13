@@ -1,4 +1,4 @@
-import streamlit as st
+lpimport streamlit as st
 import pandas as pd
 import os
 import base64
@@ -252,7 +252,7 @@ else:
 
             # --- AGGIUNTA TASTO HELP (CON CONTROLLI GOOGLE ATTIVI) ---
             st.write("") 
-            with st.expander("💡 HAI BISOGNO DI AIUTO?"):
+            with st.expander("💡 HELP in linea (Clicca qui per Aprire/Chiudere)"):
                 # Usiamo un link che forza la visualizzazione della barra strumenti
                 url_help_full = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
                 
@@ -277,6 +277,7 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
 
 
