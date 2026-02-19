@@ -27,7 +27,6 @@ st.markdown("""
 # --- FUNZIONE RECUPERO DATI GOOGLE SHEETS ---
 def get_sheet_data(gid):
     try:
-        # Prende l'URL salvato nei Secrets e lo trasforma in link di esportazione CSV
         base_url = st.secrets["gsheets_url"].split("/edit")[0]
         csv_url = f"{base_url}/export?format=csv&gid={gid}"
         return pd.read_csv(csv_url)
@@ -97,7 +96,6 @@ if not st.session_state.autenticato:
     """, unsafe_allow_html=True)
     codice = st.text_input("Inserisci codice:", type="password", label_visibility="collapsed")
     if st.button("ENTRA"):
-        # CARICAMENTO DA FOGLIO "Codici" (GID 184205490)
         df_codici_access = get_sheet_data("184205490")
         if not df_codici_access.empty and codice in df_codici_access.iloc[:,0].astype(str).values:
             st.session_state.autenticato = True
@@ -108,7 +106,6 @@ if not st.session_state.autenticato:
 # --- CARICAMENTO RISORSE ---
 @st.cache_data
 def carica_discipline():
-    # CARICAMENTO DA FOGLIO "Discipline" (GID 652955788)
     df_d = get_sheet_data("652955788") 
     if not df_d.empty:
         return pd.Series(df_d.Disciplina.values, index=df_d.Codice.astype(str)).to_dict()
@@ -118,21 +115,17 @@ dict_discipline = carica_discipline()
 
 @st.cache_data
 def carica_codici_dispense():
-    # CARICAMENTO DA FOGLIO "Dispensecod" (GID 170470777)
     df_cod = get_sheet_data("170470777")
     if not df_cod.empty:
-        return [str(x).strip() for x in df_cod.iloc[:,0].dropna().tolist()]
+        return [str(x).strip().lower() for x in df_cod.iloc[:,0].dropna().tolist()]
     return []
 
 codici_dispense = carica_codici_dispense()
 
 def importa_quesiti():
     try:
-        # CARICAMENTO DA FOGLIO "Test" (GID 0)
         df = get_sheet_data("0")
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
-        
-        # CARICAMENTO DA FOGLIO "Punteggi" (GID 614003066)
         df_p = get_sheet_data("614003066")
         if not df_p.empty:
             st.session_state.punteggi = {"Corretta": float(df_p.iloc[0,0]), "Non Data": float(df_p.iloc[0,1]), "Errata": float(df_p.iloc[0,2])}
@@ -194,22 +187,30 @@ else:
                     if st.button(f"{icona} Quesito {i+1}", key=f"nav_{i}", use_container_width=True):
                         st.session_state.indice = i; st.rerun()
         st.write("---")
+        
+        # --- SEZIONE DISPENSE AGGIORNATA ---
         with st.expander("📚 DISPENSE", expanded=True):
             if st.session_state.codice_dispense_valido == "":
                 cod_s = st.text_input("Codice sblocco:", type="password")
-                if cod_s in codici_dispense:
-                    st.session_state.codice_dispense_valido = cod_s
+                if cod_s.strip().lower() in codici_dispense:
+                    st.session_state.codice_dispense_valido = cod_s.strip().lower()
                     st.rerun()
+            
             if st.session_state.codice_dispense_valido != "":
                 try:
-                    # NOTA: Qui carichiamo l'elenco dei titoli dei PDF (Foglio "Discipline" o aggiungine uno apposito se serve)
-                    df_on = get_sheet_data("652955788") 
-                    titoli = df_on.iloc[:, 1].dropna().tolist()
-                    sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
-                    if sel != "--" and st.button("📖 APRI DISPENSA"):
-                        st.session_state.pdf_id_selezionato = str(df_on[df_on.iloc[:,1] == sel].iloc[0, 2]).strip()
-                        st.rerun()
-                except: st.warning("Database occupato. Riprova.")
+                    # Carichiamo il foglio "Dispense" usando il GID 2095138066
+                    df_disp = get_sheet_data("2095138066") 
+                    if not df_disp.empty:
+                        titoli = df_disp.iloc[:, 0].dropna().tolist()
+                        sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
+                        if sel != "--" and st.button("📖 APRI DISPENSA"):
+                            # Recupera l'ID Drive dalla Colonna B
+                            st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
+                            st.rerun()
+                    else:
+                        st.warning("Elenco dispense vuoto.")
+                except:
+                    st.warning("Errore caricamento dispense.")
 
     with c_ct:
         if not st.session_state.df_filtrato.empty:
