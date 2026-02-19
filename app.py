@@ -71,26 +71,26 @@ def genera_report_pdf():
     
     # Titolo
     pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(0, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
+    pdf.cell(190, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
     
     # Risultato
     pdf.set_font("helvetica", 'B', 12)
-    pdf.cell(0, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
+    pdf.cell(190, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.ln(10)
     
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
         
-        # Domanda
+        # Domanda - Forzata larghezza a 180 per evitare crash
         pdf.set_font("helvetica", 'B', 10)
-        pdf.multi_cell(0, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
+        pdf.multi_cell(180, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
         
-        # Risposte separate per evitare errori di spazio orizzontale
+        # Risposte separate - Forzata larghezza a 180
         pdf.set_font("helvetica", '', 10)
-        pdf.multi_cell(0, 6, pulisci_testo(f"Tua Risposta: {r_u}"))
-        pdf.multi_cell(0, 6, pulisci_testo(f"Risposta Esatta: {r_e}"))
+        pdf.multi_cell(180, 6, pulisci_testo(f"Tua Risposta: {r_u}"))
+        pdf.multi_cell(180, 6, pulisci_testo(f"Risposta Esatta: {r_e}"))
         
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
@@ -209,20 +209,15 @@ else:
                     st.rerun()
             
             if st.session_state.codice_dispense_valido != "":
-                try:
-                    # Carichiamo il foglio "Dispense" usando il GID 2095138066
-                    df_disp = get_sheet_data("2095138066") 
-                    if not df_disp.empty:
-                        titoli = df_disp.iloc[:, 0].dropna().tolist()
-                        sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
-                        if sel != "--" and st.button("📖 APRI DISPENSA"):
-                            # Recupera l'ID Drive dalla Colonna B
-                            st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
-                            st.rerun()
-                    else:
-                        st.warning("Elenco dispense vuoto.")
-                except:
-                    st.warning("Errore caricamento dispense.")
+                # Carichiamo il foglio "Dispense" usando il GID 2095138066
+                df_disp = get_sheet_data("2095138066") 
+                if not df_disp.empty:
+                    titoli = df_disp.iloc[:, 0].dropna().tolist()
+                    sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
+                    if sel != "--" and st.button("📖 APRI DISPENSA"):
+                        # Recupera l'ID Drive dalla Colonna B
+                        st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
+                        st.rerun()
 
     with c_ct:
         if not st.session_state.df_filtrato.empty:
