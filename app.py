@@ -85,12 +85,12 @@ def genera_report_pdf():
         
         # Domanda - Forzata larghezza a 180 per evitare crash
         pdf.set_font("helvetica", 'B', 10)
-        pdf.multi_cell(180, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
+        pdf.multi_cell(100, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
         
         # Risposte separate - Forzata larghezza a 180
         pdf.set_font("helvetica", '', 10)
-        pdf.multi_cell(180, 6, pulisci_testo(f"Tua Risposta: {r_u}"))
-        pdf.multi_cell(180, 6, pulisci_testo(f"Risposta Esatta: {r_e}"))
+        pdf.multi_cell(100, 6, pulisci_testo(f"Tua Risposta: {r_u}"))
+        pdf.multi_cell(100, 6, pulisci_testo(f"Risposta Esatta: {r_e}"))
         
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
@@ -253,3 +253,4 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
