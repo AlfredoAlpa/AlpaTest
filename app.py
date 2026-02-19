@@ -68,22 +68,34 @@ def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
+    
+    # Titolo
     pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(100, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
+    pdf.cell(0, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
+    
+    # Risultato
     pdf.set_font("helvetica", 'B', 12)
-    pdf.cell(100, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
+    pdf.cell(0, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.ln(10)
+    
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
-        pdf.set_font("helvetica", 'B', 11)
-        pdf.multi_cell(0, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
-        pdf.set_font("helvetica", '', 11)
-        pdf.multi_cell(0, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
+        
+        # Domanda
+        pdf.set_font("helvetica", 'B', 10)
+        pdf.multi_cell(0, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
+        
+        # Risposte separate per evitare errori di spazio orizzontale
+        pdf.set_font("helvetica", '', 10)
+        pdf.multi_cell(0, 6, pulisci_testo(f"Tua Risposta: {r_u}"))
+        pdf.multi_cell(0, 6, pulisci_testo(f"Risposta Esatta: {r_e}"))
+        
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.ln(5) 
+        pdf.ln(4) 
+        
     return bytes(pdf.output())
 
 # --- LOGIN ---
