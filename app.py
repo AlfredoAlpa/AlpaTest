@@ -18,38 +18,23 @@ st.markdown("""
     .nome-materia { font-size: 0.95rem !important; color: white !important; font-weight: 500; margin-bottom: 2px; }
     .report-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #FFD700; }
     hr { border-color: rgba(255,255,255,0.1); }
-    
-  /* NUOVA SOLUZIONE ETICHETTE DA/A */
-    .label-da-a { 
-        color: #FFD700; 
-        font-size: 13px !important; 
-        font-weight: bold; 
-        position: relative;
-        z-index: 999;
-        top: 10px;
-        margin-bottom: 0px !important;
-    }
-
-    /* CASELLE NERE PIÙ SOTTILI */
-    div[data-testid="stTextInput"] div[data-baseweb="input"] {
-        min-height: 28px !important;
-        height: 28px !important;
-        background-color: black !important;
-    }
-
-    div[data-testid="stTextInput"] input {
-        padding: 0px 10px !important;
-        font-size: 0.85rem !important;
-        height: 28px !important;
-    }
+    .label-da-a { color: #FFD700; font-size: 13px !important; font-weight: bold; position: relative; z-index: 999; top: 10px; margin-bottom: 0px !important; }
+    div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 28px !important; height: 28px !important; background-color: black !important; }
+    div[data-testid="stTextInput"] input { padding: 0px 10px !important; font-size: 0.85rem !important; height: 28px !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# Parametri Google Sheets
-SHEET_ID = "1WjRbERt91YEr4zVr5ZuRdmlJ85CmHreHHRrlMkyv8zs"
-SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
+# --- FUNZIONE RECUPERO DATI GOOGLE SHEETS ---
+def get_sheet_data(gid):
+    try:
+        # Prende l'URL salvato nei Secrets e lo trasforma in link di esportazione CSV
+        base_url = st.secrets["gsheets_url"].split("/edit")[0]
+        csv_url = f"{base_url}/export?format=csv&gid={gid}"
+        return pd.read_csv(csv_url)
+    except Exception as e:
+        return pd.DataFrame()
 
-# --- INIZIALIZZAZIONE ---
+# --- INIZIALIZZAZIONE STATO ---
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 if 'pdf_id_selezionato' not in st.session_state: st.session_state.pdf_id_selezionato = None
@@ -60,7 +45,7 @@ if 'start_time' not in st.session_state: st.session_state.start_time = None
 if 'punteggi' not in st.session_state: st.session_state.punteggi = {"Corretta": 0.75, "Non Data": 0.0, "Errata": -0.25}
 if 'codice_dispense_valido' not in st.session_state: st.session_state.codice_dispense_valido = ""
 
-# --- FUNZIONI REPORT ---
+# --- FUNZIONI UTILI ---
 def pulisci_testo(testo):
     if pd.isna(testo) or testo == "": return " "
     repls = {'’':"'",'‘':"'",'“':'"','”':'"','–':'-','à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u'}
@@ -94,9 +79,9 @@ def genera_report_pdf():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
         pdf.set_font("helvetica", 'B', 11)
-        pdf.multi_cell(100, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
+        pdf.multi_cell(0, 7, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"), border=0, align='L')
         pdf.set_font("helvetica", '', 11)
-        pdf.multi_cell(100, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
+        pdf.multi_cell(0, 7, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"), border=0, align='L')
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(5) 
@@ -107,12 +92,14 @@ if not st.session_state.autenticato:
     st.markdown("""
         <div style="border: 3px solid #FFD700; border-radius: 20px; padding: 40px; background-color: rgba(0,0,0,0.6); text-align: center; max-width: 650px; margin: 40px auto;">
             <h1 style="color: #FFD700; font-size: 2.4rem;">🔐 Accesso AlPaTest</h1>
-            <p style="color: white; font-size: 1.25rem;"><b>Benvenuta/o nella piattaforma AlPaTest.</b><br><br>Seleziona i tuoi test, scegli dieci intervalli da... a... in dieci materie. Simula la tua prova. Nella sezione studio puoi leggere tesine informative.</p>
+            <p style="color: white; font-size: 1.25rem;">Benvenuta/o. Inserisci il codice per iniziare.</p>
         </div>
     """, unsafe_allow_html=True)
     codice = st.text_input("Inserisci codice:", type="password", label_visibility="collapsed")
     if st.button("ENTRA"):
-        if codice.lower() in ["open", "studente01"]:
+        # CARICAMENTO DA FOGLIO "Codici" (GID 184205490)
+        df_codici_access = get_sheet_data("184205490")
+        if not df_codici_access.empty and codice in df_codici_access.iloc[:,0].astype(str).values:
             st.session_state.autenticato = True
             st.rerun()
         else: st.error("Codice errato")
@@ -121,31 +108,35 @@ if not st.session_state.autenticato:
 # --- CARICAMENTO RISORSE ---
 @st.cache_data
 def carica_discipline():
-    try:
-        df_d = pd.read_excel("quiz.xlsx", sheet_name="Discipline")
-        df_d = df_d.dropna(subset=['Codice', 'Disciplina'])
-        return pd.Series(df_d.Disciplina.values, index=df_d.Codice).to_dict()
-    except: return {}
+    # CARICAMENTO DA FOGLIO "Discipline" (GID 652955788)
+    df_d = get_sheet_data("652955788") 
+    if not df_d.empty:
+        return pd.Series(df_d.Disciplina.values, index=df_d.Codice.astype(str)).to_dict()
+    return {}
 
 dict_discipline = carica_discipline()
 
 @st.cache_data
 def carica_codici_dispense():
-    try:
-        df_cod = pd.read_excel("quiz.xlsx", sheet_name="Dispensecod", header=None)
-        return [str(x).strip() for x in df_cod[0].dropna().tolist()]
-    except: return []
+    # CARICAMENTO DA FOGLIO "Dispensecod" (GID 170470777)
+    df_cod = get_sheet_data("170470777")
+    if not df_cod.empty:
+        return [str(x).strip() for x in df_cod.iloc[:,0].dropna().tolist()]
+    return []
 
 codici_dispense = carica_codici_dispense()
 
 def importa_quesiti():
     try:
-        df = pd.read_excel("quiz.xlsx", sheet_name=0)
+        # CARICAMENTO DA FOGLIO "Test" (GID 0)
+        df = get_sheet_data("0")
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
-        try:
-            df_p = pd.read_excel("quiz.xlsx", sheet_name="Punteggi")
+        
+        # CARICAMENTO DA FOGLIO "Punteggi" (GID 614003066)
+        df_p = get_sheet_data("614003066")
+        if not df_p.empty:
             st.session_state.punteggi = {"Corretta": float(df_p.iloc[0,0]), "Non Data": float(df_p.iloc[0,1]), "Errata": float(df_p.iloc[0,2])}
-        except: pass
+        
         frames = []
         for i in range(9):
             d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
@@ -154,7 +145,7 @@ def importa_quesiti():
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
             st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
-    except Exception as e: st.error(f"Errore caricamento: {e}")
+    except Exception as e: st.error(f"Errore: {e}")
 
 @st.fragment(run_every=1)
 def mostra_timer():
@@ -168,7 +159,7 @@ with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html
 with t2: mostra_timer()
 st.markdown("<hr>", unsafe_allow_html=True)
 
-# --- LOGICA VISUALIZZAZIONE ---
+# --- VISUALIZZAZIONE ---
 if st.session_state.pdf_id_selezionato:
     if st.button("🔙 TORNA AI QUIZ", type="primary"): 
         st.session_state.pdf_id_selezionato = None
@@ -181,8 +172,7 @@ elif st.session_state.fase == "FINE":
     st.markdown("## 📊 Risultato Finale")
     st.success(f"### Punteggio Totale: {pt}")
     c_pdf, c_new = st.columns(2)
-    with c_pdf:
-        st.download_button("📥 SCARICA REPORT PDF", genera_report_pdf(), "Report_AlPaTest.pdf", "application/pdf")
+    with c_pdf: st.download_button("📥 SCARICA REPORT PDF", genera_report_pdf(), "Report_AlPaTest.pdf", "application/pdf")
     with c_new:
         if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): 
             st.session_state.clear(); st.rerun()
@@ -210,59 +200,37 @@ else:
                 if cod_s in codici_dispense:
                     st.session_state.codice_dispense_valido = cod_s
                     st.rerun()
-            
             if st.session_state.codice_dispense_valido != "":
                 try:
-                    df_on = pd.read_csv(SHEET_URL)
+                    # NOTA: Qui carichiamo l'elenco dei titoli dei PDF (Foglio "Discipline" o aggiungine uno apposito se serve)
+                    df_on = get_sheet_data("652955788") 
                     titoli = df_on.iloc[:, 1].dropna().tolist()
                     sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
                     if sel != "--" and st.button("📖 APRI DISPENSA"):
                         st.session_state.pdf_id_selezionato = str(df_on[df_on.iloc[:,1] == sel].iloc[0, 2]).strip()
                         st.rerun()
-                except:
-                    st.warning("Database momentaneamente occupato. Riprova tra un istante.")
+                except: st.warning("Database occupato. Riprova.")
 
     with c_ct:
         if not st.session_state.df_filtrato.empty:
             q = st.session_state.df_filtrato.iloc[st.session_state.indice]
             st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
-            
-            # --- AGGIUNTA PER MOSTRARE L'IMMAGINE ---
             if pd.notna(q.get('Immagine')) and str(q['Immagine']).strip() != "":
                 nome_file = str(q['Immagine']).strip()
-                # Uniamo la cartella dell'app + la cartella 'immagini' + il nome del file
                 percorso_img = os.path.join(os.path.dirname(__file__), "immagini", nome_file)
-                
-                if os.path.exists(percorso_img):
-                    st.image(percorso_img, width=450)
-                else:
-                    st.error(f"File immagine non trovato: {percorso_img}")
-            # ----------------------------------------
-
+                if os.path.exists(percorso_img): st.image(percorso_img, width=450)
+            
             opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
             idx_sel = ["A","B","C","D"].index(st.session_state.risposte_date.get(st.session_state.indice)) if st.session_state.risposte_date.get(st.session_state.indice) else None
             scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
             if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
             st.write("---")
-            
             b1, b2, b3 = st.columns(3)
             if b1.button("⬅️ PREC.") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
             if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
             if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
-
-            # --- AGGIUNTA TASTO HELP (CON CONTROLLI GOOGLE ATTIVI) ---
-            st.write("") 
-            with st.expander("💡 HAI BISOGNO DI AIUTO? (Clicca qui per Aprire/Chiudere)"):
-                # Usiamo un link che forza la visualizzazione della barra strumenti
-                url_help_full = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
-                
-                # Visualizzazione con altezza leggermente maggiore per far stare i controlli
-                pdf_display = f'<iframe src="{url_help_full}" width="100%" height="700" allow="autoplay"></iframe>'
-                st.markdown(pdf_display, unsafe_allow_html=True)
-                
-                st.caption("Usa la freccetta in alto a destra nel riquadro per ingrandire.")
-            # -----------------------------------------------------
         else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
+
     with c_dx:
         st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
         for i in range(9):
@@ -277,17 +245,3 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
