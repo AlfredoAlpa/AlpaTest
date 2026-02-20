@@ -71,29 +71,29 @@ def genera_report_pdf():
     
     # Titolo
     pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(190, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
+    pdf.cell(100, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
     
     # Risultato
     pdf.set_font("helvetica", 'B', 12)
-    pdf.cell(190, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
+    pdf.cell(100, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.ln(10)
     
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
         
-        # Domanda - Forzata larghezza a 180 per evitare crash
+        # Domanda - Larghezza impostata a 100 come richiesto
         pdf.set_font("helvetica", 'B', 10)
         pdf.multi_cell(100, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
         
-        # Risposte separate - Forzata larghezza a 180
+        # Riga con Tua Risposta e Risposta Esatta affiancate
         pdf.set_font("helvetica", '', 10)
-        pdf.multi_cell(100, 6, pulisci_testo(f"Tua Risposta: {r_u}"))
-        pdf.multi_cell(100, 6, pulisci_testo(f"Risposta Esatta: {r_e}"))
+        testo_risposte = f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"
+        pdf.multi_cell(100, 6, pulisci_testo(testo_risposte))
         
         pdf.ln(2)
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.line(10, pdf.get_y(), 110, pdf.get_y()) # Linea accorciata a 110 per coerenza con il margine 100
         pdf.ln(4) 
         
     return bytes(pdf.output())
@@ -253,4 +253,5 @@ else:
         st.write("---")
         st.checkbox("Simulazione (30 min)", key="simulazione")
         st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
 
