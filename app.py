@@ -235,8 +235,9 @@ else:
                     df_disp = get_sheet_data("2095138066") 
                     if not df_disp.empty:
                         titoli = df_disp.iloc[:, 0].dropna().tolist()
-                        sel = st.selectbox("Seleziona dispensa:", ["--"] + titoli)
-                        if sel != "--" and st.button("📖 APRI DISPENSA"):
+                        # Modifica: rimosso i trattini e aggiunta freccina pulita
+                        sel = st.selectbox("Seleziona dispensa:", titoli, index=None, placeholder="Scegli...")
+                        if sel and st.button("📖 APRI DISPENSA"):
                             st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
                             st.rerun()
 
@@ -274,5 +275,6 @@ else:
                 c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed")
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
-            st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
-
+            # Modifica: il pulsante diventa scuro (secondary) dopo l'importazione
+            tipo_btn = "secondary" if not st.session_state.df_filtrato.empty else "primary"
+            st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type=tipo_btn)
