@@ -161,16 +161,30 @@ def mostra_timer():
 # --- INIZIO LOGICA DI VISUALIZZAZIONE (BIVIO) ---
 
 if st.session_state.pdf_id_selezionato:
-    # --- STANZA DISPENSA (Sostituzione Schermata) ---
-    t1, t2 = st.columns([7, 3])
-    with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
-    
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
-    # Pulsante grande per tornare
-    if st.button("⬅️ CHIUDI DISPENSA E TORNA AI QUIZ", type="primary", use_container_width=True): 
+    # --- STANZA DISPENSA (MODIFICA: PULSANTE FISSO) ---
+    st.markdown("""
+        <style>
+        div.stButton > button:first-child {
+            position: fixed;
+            top: 15px;
+            left: 5%;
+            right: 5%;
+            width: 90%;
+            z-index: 999999;
+            border: 2px solid white !important;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+        }
+        .spacer-pdf { margin-top: 70px; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Il pulsante rimane fisso grazie al CSS sopra
+    if st.button("⬅️ CHIUDI DISPENSA E TORNA AI QUIZ", type="primary"): 
         st.session_state.pdf_id_selezionato = None
         st.rerun()
+    
+    # Spazio per evitare sovrapposizione iniziale
+    st.markdown('<div class="spacer-pdf"></div>', unsafe_allow_html=True)
     
     url = f"https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview"
     st.markdown(f'<iframe src="{url}" width="100%" height="800" style="border:none; background:white; border-radius:10px;"></iframe>', unsafe_allow_html=True)
