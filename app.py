@@ -254,10 +254,11 @@ else:
                 scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
                 if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
                 st.write("---")
+                # --- RIGA PULSANTI NAVIGAZIONE AGGIORNATA ---
                 b1, b2, b3 = st.columns(3)
-                if b1.button("⬅️ PREC.") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
-                if b2.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
-                if b3.button("SUCC. ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
+                if b1.button("⬅️ Precedente") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
+                if b2.button("Successivo ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
+                if b3.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
             else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
 
         with c_dx:
