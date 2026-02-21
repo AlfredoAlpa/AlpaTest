@@ -179,7 +179,7 @@ if st.session_state.pdf_id_selezionato:
     """, unsafe_allow_html=True)
 
     # Il pulsante rimane fisso grazie al CSS sopra
-    if st.button("⬅️ CHIUDI DISPENSA E TORNA AI QUIZ", type="primary"): 
+    if st.button("⬅️ CHIUDI DISPENSA E TORNA AI QUESITI", type="primary"): 
         st.session_state.pdf_id_selezionato = None
         st.rerun()
     
@@ -275,3 +275,4 @@ else:
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True)
+
