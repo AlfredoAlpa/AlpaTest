@@ -8,7 +8,7 @@ from fpdf import FPDF
 # 1. CONFIGURAZIONE E LARGHEZZA UTILE
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
-# --- PROTEZIONE AVANZATA (CSS + JS) ---
+# --- PROTEZIONE AVANZATA ---
 st.markdown("""
     <style>
     [data-testid="stAppViewBlockContainer"] { padding-left: 2rem !important; padding-right: 2rem !important; max-width: 100% !important; }
@@ -19,38 +19,35 @@ st.markdown("""
     .nome-materia { font-size: 0.95rem !important; color: white !important; font-weight: 500; margin-bottom: 2px; }
     .report-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #FFD700; }
     hr { border-color: rgba(255,255,255,0.1); }
-    .label-da-a { color: #FFD700; font-size: 13px !important; font-weight: bold; position: relative; z-index: 999; top: 10px; margin-bottom: 0px !important; }
-    div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 28px !important; height: 28px !important; background-color: black !important; }
-    div[data-testid="stTextInput"] input { padding: 0px 10px !important; font-size: 0.85rem !important; height: 28px !important; }
     
-    /* Impedisce la selezione visiva del testo */
+    /* Banner Protezione */
+    .banner-protezione {
+        background-color: rgba(255, 75, 75, 0.2);
+        color: #FF4B4B;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #FF4B4B;
+        text-align: center;
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+
+    /* Protezione Selezione Testo */
     * {
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
         user-select: none !important;
     }
-    img { -webkit-user-drag: none; user-drag: none; }
     </style>
 
     <script>
-    // Funzione universale per l'avviso
-    const avvisoProtezione = () => {
-        alert('Funzione copia disabilitata. È possibile utilizzare questo sistema solo per la consultazione dei PDF di AlPaTest.');
-    };
-
-    // Applica i blocchi al documento principale (parent) per bypassare l'iframe di Streamlit
     const doc = window.parent.document;
-
-    doc.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        avvisoProtezione();
-    }, true);
-
+    // Blocco tasto destro e combinazioni tastiera (senza alert per evitare blocchi browser)
+    doc.addEventListener('contextmenu', e => e.preventDefault(), true);
     doc.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'p')) {
             e.preventDefault();
-            avvisoProtezione();
         }
     }, true);
     </script>
@@ -209,6 +206,9 @@ else:
                         sel = st.selectbox("Seleziona:", df_disp.iloc[:, 0].dropna().tolist(), index=None, placeholder="Scegli...")
                         if sel and st.button("📖 APRI DISPENSA"): st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip(); st.rerun()
         with c_ct:
+            # BANNER INFORMATIVO FISSO
+            st.markdown('<div class="banner-protezione">⚠️ Protezione AlPaTest attiva: funzioni di copia e tasto destro disabilitate.</div>', unsafe_allow_html=True)
+            
             if not st.session_state.df_filtrato.empty:
                 q = st.session_state.df_filtrato.iloc[st.session_state.indice]
                 st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
@@ -225,7 +225,7 @@ else:
                 if b2.button("Successivo ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
                 if b3.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
                 
-                # --- TASTO HELP ORIGINALE ---
+                # --- TASTO HELP ---
                 st.write("") 
                 with st.expander("💡 HAI BISOGNO DI AIUTO? (Clicca qui per Aprire/Chiudere)"):
                     url_help_full = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
