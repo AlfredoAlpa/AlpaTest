@@ -29,11 +29,7 @@ st.markdown("""
         -ms-user-select: none !important;
         user-select: none !important;
     }
-    /* Impedisce il trascinamento delle immagini */
-    img {
-        -webkit-user-drag: none;
-        user-drag: none;
-    }
+    img { -webkit-user-drag: none; user-drag: none; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -44,7 +40,6 @@ st.components.v1.html("""
         e.preventDefault();
         alert('Funzione copia disabilitata. È possibile utilizzare questo sistema solo per la consultazione dei PDF di AlPaTest.');
     });
-
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'p')) {
             e.preventDefault();
@@ -98,44 +93,27 @@ def genera_report_pdf():
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
-    
-    # Titolo - Centrato su 100
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(100, 10, pulisci_testo("REPORT FINALE - AlPaTest"), ln=True, align='C')
     pdf.ln(5)
-    
-    # Risultato - Centrato su 100
     pdf.set_font("helvetica", 'B', 12)
     pdf.cell(100, 8, pulisci_testo(f"PUNTEGGIO TOTALE: {punti_tot}"), ln=True, align='C')
     pdf.ln(10)
-    
     for i, row in st.session_state.df_filtrato.iterrows():
         r_u = st.session_state.risposte_date.get(i, "N.D.")
         r_e = str(row['Corretta']).strip()
-        
-        # Domanda - Larghezza 100
         pdf.set_font("helvetica", 'B', 10)
         pdf.multi_cell(100, 6, pulisci_testo(f"Domanda {i+1}: {row['Domanda']}"))
-        
-        # RISPOSTE
         pdf.set_font("helvetica", '', 10)
-        info_risposte = f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"
-        pdf.multi_cell(100, 6, pulisci_testo(info_risposte))
-        
+        pdf.multi_cell(100, 6, pulisci_testo(f"Tua Risposta: {r_u} | Risposta Esatta: {r_e}"))
         pdf.ln(2)
         pdf.line(10, pdf.get_y(), 110, pdf.get_y()) 
         pdf.ln(4) 
-        
     return bytes(pdf.output())
 
 # --- LOGIN ---
 if not st.session_state.autenticato:
-    st.markdown("""
-        <div style="border: 3px solid #FFD700; border-radius: 20px; padding: 40px; background-color: rgba(0,0,0,0.6); text-align: center; max-width: 650px; margin: 40px auto;">
-            <h1 style="color: #FFD700; font-size: 2.4rem;">🔐 Accesso AlPaTest</h1>
-            <p style="color: white; font-size: 1.25rem;">Benvenuta/o. Inserisci il codice per iniziare.</p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div style="border: 3px solid #FFD700; border-radius: 20px; padding: 40px; background-color: rgba(0,0,0,0.6); text-align: center; max-width: 650px; margin: 40px auto;"><h1 style="color: #FFD700; font-size: 2.4rem;">🔐 Accesso AlPaTest</h1><p style="color: white; font-size: 1.25rem;">Benvenuta/o. Inserisci il codice per iniziare.</p></div>', unsafe_allow_html=True)
     codice = st.text_input("Inserisci codice:", type="password", label_visibility="collapsed")
     if st.button("ENTRA"):
         df_codici_access = get_sheet_data("184205490")
@@ -149,18 +127,14 @@ if not st.session_state.autenticato:
 @st.cache_data
 def carica_discipline():
     df_d = get_sheet_data("652955788") 
-    if not df_d.empty:
-        return pd.Series(df_d.Disciplina.values, index=df_d.Codice.astype(str)).to_dict()
-    return {}
+    return pd.Series(df_d.Disciplina.values, index=df_d.Codice.astype(str)).to_dict() if not df_d.empty else {}
 
 dict_discipline = carica_discipline()
 
 @st.cache_data
 def carica_codici_dispense():
     df_cod = get_sheet_data("170470777")
-    if not df_cod.empty:
-        return [str(x).strip().lower() for x in df_cod.iloc[:,0].dropna().tolist()]
-    return []
+    return [str(x).strip().lower() for x in df_cod.iloc[:,0].dropna().tolist()] if not df_cod.empty else []
 
 codici_dispense = carica_codici_dispense()
 
@@ -171,12 +145,7 @@ def importa_quesiti():
         df_p = get_sheet_data("614003066")
         if not df_p.empty:
             st.session_state.punteggi = {"Corretta": float(df_p.iloc[0,0]), "Non Data": float(df_p.iloc[0,1]), "Errata": float(df_p.iloc[0,2])}
-        
-        frames = []
-        for i in range(9):
-            d, a = st.session_state.get(f"da_{i}",""), st.session_state.get(f"a_{i}","")
-            if d.strip().isdigit() and a.strip().isdigit():
-                frames.append(df.iloc[int(d)-1 : int(a)])
+        frames = [df.iloc[int(st.session_state[f"da_{i}"])-1 : int(st.session_state[f"a_{i}"])] for i in range(9) if st.session_state.get(f"da_{i}","").isdigit()]
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
             st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
@@ -188,39 +157,15 @@ def mostra_timer():
         rimanente = max(0, 1800 - (time.time() - st.session_state.start_time))
         st.markdown(f'<p class="timer-style">⏱️ {int(rimanente//60):02d}:{int(rimanente%60):02d}</p>', unsafe_allow_html=True)
 
-# --- INIZIO LOGICA DI VISUALIZZAZIONE (BIVIO) ---
-
+# --- VISUALIZZAZIONE ---
 if st.session_state.pdf_id_selezionato:
-    # --- STANZA DISPENSA (MODIFICA: PULSANTE FISSO) ---
-    st.markdown("""
-        <style>
-        div.stButton > button:first-child {
-            position: fixed;
-            top: 15px;
-            left: 5%;
-            right: 5%;
-            width: 90%;
-            z-index: 999999;
-            border: 2px solid white !important;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-        }
-        .spacer-pdf { margin-top: 70px; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Il pulsante rimane fisso grazie al CSS sopra
+    st.markdown('<style>div.stButton > button:first-child { position: fixed; top: 15px; left: 5%; right: 5%; width: 90%; z-index: 999999; border: 2px solid white !important; box-shadow: 0px 4px 10px rgba(0,0,0,0.5); } .spacer-pdf { margin-top: 70px; }</style>', unsafe_allow_html=True)
     if st.button("⬅️ CHIUDI DISPENSA E TORNA AI QUESITI", type="primary"): 
         st.session_state.pdf_id_selezionato = None
         st.rerun()
-    
-    # Spazio per evitare sovrapposizione iniziale
     st.markdown('<div class="spacer-pdf"></div>', unsafe_allow_html=True)
-    
-    url = f"https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview"
-    st.markdown(f'<iframe src="{url}" width="100%" height="800" style="border:none; background:white; border-radius:10px;"></iframe>', unsafe_allow_html=True)
-
+    st.markdown(f'<iframe src="https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview" width="100%" height="800" style="border:none; background:white; border-radius:10px;"></iframe>', unsafe_allow_html=True)
 else:
-    # --- STANZA QUIZ (Tutto il tuo codice originale) ---
     t1, t2 = st.columns([7, 3])
     with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
     with t2: mostra_timer()
@@ -228,20 +173,15 @@ else:
 
     if st.session_state.fase == "FINE":
         es, er, nd, pt = calcola_risultati()
-        st.markdown("## 📊 Risultato Finale")
         st.success(f"### Punteggio Totale: {pt}")
         c_pdf, c_new = st.columns(2)
         with c_pdf: st.download_button("📥 SCARICA REPORT PDF", genera_report_pdf(), "Report_AlPaTest.pdf", "application/pdf")
-        with c_new:
-            if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): 
-                st.session_state.clear(); st.rerun()
-        st.write("---")
+        with c_new: 
+            if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): st.session_state.clear(); st.rerun()
         for i, row in st.session_state.df_filtrato.iterrows():
-            tua = st.session_state.risposte_date.get(i, "N.D.")
-            corr = str(row['Corretta']).strip()
+            tua, corr = st.session_state.risposte_date.get(i, "N.D."), str(row['Corretta']).strip()
             colore = "#00FF00" if tua == corr else "#FF4B4B"
             st.markdown(f'<div class="report-card"><p style="color:{colore}; font-weight:bold;">Quesito {i+1}</p><p>{row["Domanda"]}</p><p>Tua: {tua} | Corr: {corr}</p></div>', unsafe_allow_html=True)
-
     else:
         c_sx, c_ct, c_dx = st.columns([2.8, 7, 3.2])
         with c_sx:
@@ -250,35 +190,24 @@ else:
                 with st.container(height=350):
                     for i in range(len(st.session_state.df_filtrato)):
                         icona = "✅" if i in st.session_state.risposte_date else "⚪"
-                        if st.button(f"{icona} Quesito {i+1}", key=f"nav_{i}", use_container_width=True):
-                            st.session_state.indice = i; st.rerun()
+                        if st.button(f"{icona} Quesito {i+1}", key=f"nav_{i}", use_container_width=True): st.session_state.indice = i; st.rerun()
             st.write("---")
-            
             with st.expander("📚 DISPENSE", expanded=True):
                 if st.session_state.codice_dispense_valido == "":
                     cod_s = st.text_input("Codice sblocco:", type="password")
-                    if cod_s.strip().lower() in codici_dispense:
-                        st.session_state.codice_dispense_valido = cod_s.strip().lower()
-                        st.rerun()
-                
+                    if cod_s.strip().lower() in codici_dispense: st.session_state.codice_dispense_valido = cod_s.strip().lower(); st.rerun()
                 if st.session_state.codice_dispense_valido != "":
                     df_disp = get_sheet_data("2095138066") 
                     if not df_disp.empty:
-                        titoli = df_disp.iloc[:, 0].dropna().tolist()
-                        sel = st.selectbox("Seleziona dispensa:", titoli, index=None, placeholder="Scegli...")
-                        if sel and st.button("📖 APRI DISPENSA"):
-                            st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
-                            st.rerun()
-
+                        sel = st.selectbox("Seleziona:", df_disp.iloc[:, 0].dropna().tolist(), index=None, placeholder="Scegli...")
+                        if sel and st.button("📖 APRI DISPENSA"): st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip(); st.rerun()
         with c_ct:
             if not st.session_state.df_filtrato.empty:
                 q = st.session_state.df_filtrato.iloc[st.session_state.indice]
                 st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
-                if pd.notna(q.get('Immagine')) and str(q['Immagine']).strip() != "":
-                    nome_file = str(q['Immagine']).strip()
-                    percorso_img = os.path.join(os.path.dirname(__file__), "immagini", nome_file)
-                    if os.path.exists(percorso_img): st.image(percorso_img, width=450)
-                
+                if pd.notna(q.get('Immagine')) and str(q['Immagine']).strip():
+                    img_path = os.path.join(os.path.dirname(__file__), "immagini", str(q['Immagine']).strip())
+                    if os.path.exists(img_path): st.image(img_path, width=450)
                 opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
                 idx_sel = ["A","B","C","D"].index(st.session_state.risposte_date.get(st.session_state.indice)) if st.session_state.risposte_date.get(st.session_state.indice) else None
                 scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
@@ -288,19 +217,22 @@ else:
                 if b1.button("⬅️ Precedente") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
                 if b2.button("Successivo ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
                 if b3.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
+                
+                # --- TASTO HELP ORIGINALE ---
+                st.write("") 
+                with st.expander("💡 HAI BISOGNO DI AIUTO? (Clicca qui per Aprire/Chiudere)"):
+                    url_help_full = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
+                    st.markdown(f'<iframe src="{url_help_full}" width="100%" height="700" allow="autoplay"></iframe>', unsafe_allow_html=True)
+                    st.caption("Usa la freccetta in alto a destra nel riquadro per ingrandire.")
             else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
-
         with c_dx:
             st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
             for i in range(9):
                 cod_mat = list(dict_discipline.keys())[i] if i < len(dict_discipline) else f"G{i+1}"
-                nome_mat = dict_discipline.get(cod_mat, f"Gruppo {i+1}")
-                st.markdown(f"<p class='nome-materia'>{cod_mat}: {nome_mat}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p class='nome-materia'>{cod_mat}: {dict_discipline.get(cod_mat, f'Gruppo {i+1}')}</p>", unsafe_allow_html=True)
                 c_d, c_a = st.columns(2)
-                c_d.markdown('<p class="label-da-a">Da:</p>', unsafe_allow_html=True)
-                c_d.text_input("da", key=f"da_{i}", label_visibility="collapsed")
-                c_a.markdown('<p class="label-da-a">A:</p>', unsafe_allow_html=True)
-                c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed")
+                c_d.text_input("da", key=f"da_{i}", label_visibility="collapsed", placeholder="Da")
+                c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed", placeholder="A")
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             tipo_btn = "secondary" if not st.session_state.df_filtrato.empty else "primary"
