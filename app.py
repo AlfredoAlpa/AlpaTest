@@ -8,6 +8,7 @@ from fpdf import FPDF
 # 1. CONFIGURAZIONE E LARGHEZZA UTILE
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
+# --- PROTEZIONE AVANZATA (CSS + JS) ---
 st.markdown("""
     <style>
     [data-testid="stAppViewBlockContainer"] { padding-left: 2rem !important; padding-right: 2rem !important; max-width: 100% !important; }
@@ -22,7 +23,7 @@ st.markdown("""
     div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 28px !important; height: 28px !important; background-color: black !important; }
     div[data-testid="stTextInput"] input { padding: 0px 10px !important; font-size: 0.85rem !important; height: 28px !important; }
     
-    /* PROTEZIONE: Impedisce la selezione del testo */
+    /* Impedisce la selezione visiva del testo */
     * {
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
@@ -31,23 +32,29 @@ st.markdown("""
     }
     img { -webkit-user-drag: none; user-drag: none; }
     </style>
-    """, unsafe_allow_html=True)
 
-# PROTEZIONE: Script per blocco tasto destro e combinazioni tastiera
-st.components.v1.html("""
     <script>
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
+    // Funzione universale per l'avviso
+    const avvisoProtezione = () => {
         alert('Funzione copia disabilitata. È possibile utilizzare questo sistema solo per la consultazione dei PDF di AlPaTest.');
-    });
-    document.addEventListener('keydown', function(e) {
+    };
+
+    // Applica i blocchi al documento principale (parent) per bypassare l'iframe di Streamlit
+    const doc = window.parent.document;
+
+    doc.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        avvisoProtezione();
+    }, true);
+
+    doc.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'p')) {
             e.preventDefault();
-            alert('Comando non consentito per motivi di sicurezza.');
+            avvisoProtezione();
         }
-    });
+    }, true);
     </script>
-    """, height=0)
+    """, unsafe_allow_html=True)
 
 # --- FUNZIONE RECUPERO DATI GOOGLE SHEETS ---
 def get_sheet_data(gid):
