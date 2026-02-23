@@ -21,8 +21,38 @@ st.markdown("""
     .label-da-a { color: #FFD700; font-size: 13px !important; font-weight: bold; position: relative; z-index: 999; top: 10px; margin-bottom: 0px !important; }
     div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 28px !important; height: 28px !important; background-color: black !important; }
     div[data-testid="stTextInput"] input { padding: 0px 10px !important; font-size: 0.85rem !important; height: 28px !important; }
+    
+    /* PROTEZIONE: Impedisce la selezione del testo */
+    * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+    }
+    /* Impedisce il trascinamento delle immagini */
+    img {
+        -webkit-user-drag: none;
+        user-drag: none;
+    }
     </style>
     """, unsafe_allow_html=True)
+
+# PROTEZIONE: Script per blocco tasto destro e combinazioni tastiera
+st.components.v1.html("""
+    <script>
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        alert('Funzione copia disabilitata. È possibile utilizzare questo sistema solo per la consultazione dei PDF di AlPaTest.');
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'p')) {
+            e.preventDefault();
+            alert('Comando non consentito per motivi di sicurezza.');
+        }
+    });
+    </script>
+    """, height=0)
 
 # --- FUNZIONE RECUPERO DATI GOOGLE SHEETS ---
 def get_sheet_data(gid):
@@ -235,7 +265,6 @@ else:
                     df_disp = get_sheet_data("2095138066") 
                     if not df_disp.empty:
                         titoli = df_disp.iloc[:, 0].dropna().tolist()
-                        # Modifica: rimosso i trattini e aggiunta freccina pulita
                         sel = st.selectbox("Seleziona dispensa:", titoli, index=None, placeholder="Scegli...")
                         if sel and st.button("📖 APRI DISPENSA"):
                             st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
@@ -255,7 +284,6 @@ else:
                 scelta = st.radio("Risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
                 if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
                 st.write("---")
-                # --- RIGA PULSANTI NAVIGAZIONE AGGIORNATA ---
                 b1, b2, b3 = st.columns(3)
                 if b1.button("⬅️ Precedente") and st.session_state.indice > 0: st.session_state.indice -= 1; st.rerun()
                 if b2.button("Successivo ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
@@ -275,6 +303,5 @@ else:
                 c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed")
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
-            # Modifica: il pulsante diventa scuro (secondary) dopo l'importazione
             tipo_btn = "secondary" if not st.session_state.df_filtrato.empty else "primary"
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type=tipo_btn)
