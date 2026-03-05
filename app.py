@@ -62,7 +62,7 @@ def get_sheet_data(gid):
 
 # --- INIZIALIZZAZIONE STATO ---
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
-if 'is_promo' not in st.session_state: st.session_state.is_promo = False # Nuova variabile per il bivio
+if 'is_promo' not in st.session_state: st.session_state.is_promo = False 
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 if 'pdf_id_selezionato' not in st.session_state: st.session_state.pdf_id_selezionato = None
 if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
@@ -133,7 +133,7 @@ if not st.session_state.autenticato:
             
     with col_promo:
         st.markdown("<p style='color:white; text-align:center;'>Vuoi provare il sistema?</p>", unsafe_allow_html=True)
-        st.write("") # Spazio estetico
+        st.write("") 
         if st.button("🚀 PROVA LA PROMO GRATUITA", use_container_width=True, type="primary"):
             st.session_state.autenticato = True
             st.session_state.is_promo = True
@@ -159,7 +159,7 @@ codici_dispense = carica_codici_dispense()
 def importa_quesiti():
     try:
         # BIVIO DATI QUESITI (FULL o PROMO)
-        gid_quesiti = "326583620" if st.session_state.is_promo else "0" # <--- CONTROLLA GID PROMOTEST
+        gid_quesiti = "326583620" if st.session_state.is_promo else "0" 
         df = get_sheet_data(gid_quesiti)
         
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
@@ -189,11 +189,18 @@ if st.session_state.pdf_id_selezionato:
     st.markdown('<div class="spacer-pdf"></div>', unsafe_allow_html=True)
     st.markdown(f'<iframe src="https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview" width="100%" height="800" style="border:none; background:white; border-radius:10px;"></iframe>', unsafe_allow_html=True)
 else:
+    # MODIFICA: Inserito tasto Logout nell'header
     t1, t2 = st.columns([7, 3])
     with t1: 
         titolo_app = "AlPaTest (PROMO)" if st.session_state.is_promo else "AlPaTest"
         st.markdown(f'<div class="logo-style">{titolo_app}</div>', unsafe_allow_html=True)
-    with t2: mostra_timer()
+    with t2: 
+        mostra_timer()
+        if st.button("🚪 Esci / Cambia Accesso", use_container_width=True):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
+
     st.markdown("<hr>", unsafe_allow_html=True)
 
     if st.session_state.fase == "FINE":
@@ -203,7 +210,6 @@ else:
         with c_pdf: st.download_button("📥 SCARICA REPORT PDF", genera_report_pdf(), "Report_AlPaTest.pdf", "application/pdf")
         with c_new: 
             if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): 
-                # Se è promo, azzeriamo ma restiamo autenticati
                 st.session_state.df_filtrato = pd.DataFrame()
                 st.session_state.risposte_date = {}
                 st.session_state.fase = "PROVA"
@@ -223,11 +229,10 @@ else:
                         if st.button(f"{icona} Quesito {i+1}", key=f"nav_{i}", use_container_width=True): st.session_state.indice = i; st.rerun()
             st.write("---")
             
-            # BIVIO DISPENSE (PROMO sbloccata, FULL richiede codice)
             with st.expander("📚 DISPENSE", expanded=True):
                 if st.session_state.is_promo:
                     st.info("Modalità Promo: Accesso libero alla presentazione.")
-                    df_disp = get_sheet_data("272698671") # <--- CONTROLLA GID PROMODISPENSE
+                    df_disp = get_sheet_data("272698671") 
                     if not df_disp.empty:
                         sel = st.selectbox("Seleziona:", df_disp.iloc[:, 0].dropna().tolist(), index=None, placeholder="Scegli...")
                         if sel and st.button("📖 APRI DISPENSA"): 
