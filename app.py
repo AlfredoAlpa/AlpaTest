@@ -17,82 +17,47 @@ st.markdown("""
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
     .logo-style { font-family: 'Georgia', serif; font-size: 3.5rem !important; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
     
-    /* 1. TESTO QUESITO E RISPOSTE - FORMATO GIGANTE */
+    /* 1. TESTO QUESITO E RISPOSTE */
     .quesito-style { color: #FFEB3B !important; font-size: 2rem !important; font-weight: bold !important; line-height: 1.4 !important; }
+    div[data-testid="stRadio"] label p { font-size: 1.5rem !important; color: white !important; }
     
-    /* Ingrandisce il testo delle opzioni A, B, C, D */
-    div[data-testid="stRadio"] label p {
-        font-size: 1.5rem !important;
-        color: white !important;
-        font-weight: 500 !important;
-    }
-    
-    /* 2. CONFIGURAZIONE (DESTRA) - MATERIE PIÙ GRANDI */
-    .nome-materia { 
-        font-size: 1.3rem !important; 
-        color: #FFD700 !important; 
-        font-weight: bold !important; 
-        margin-top: 25px !important;
-        margin-bottom: 10px !important;
-        display: block !important;
-    }
-    
-    /* 3. BOX INPUT (DA/A) - FINALMENTE ALTI */
-    div[data-testid="stTextInput"] { margin-top: -10px !important; }
-    
-    div[data-testid="stTextInput"] div[data-baseweb="input"] { 
-        min-height: 55px !important; 
-        height: 55px !important;
-        background-color: black !important; 
-        border: 2px solid #FFD700 !important;
+    /* 2. CONFIGURAZIONE (DESTRA) - RIMANE COME TI PIACE */
+    .nome-materia { font-size: 1.3rem !important; color: #FFD700 !important; font-weight: bold !important; margin-top: 25px !important; margin-bottom: 10px !important; display: block !important; }
+    div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 55px !important; height: 55px !important; background-color: black !important; border: 2px solid #FFD700 !important; border-radius: 10px !important; }
+    div[data-testid="stTextInput"] input { font-size: 1.6rem !important; color: #00FF00 !important; font-weight: bold !important; text-align: center !important; }
+
+    /* 3. PULSANTI NAVIGAZIONE (Ristretti come richiesto) */
+    /* Precedente, Successivo, Consegna, Importa */
+    .stButton button {
+        font-size: 1.25rem !important; /* Scritta leggermente ridotta */
+        height: 3.2rem !important;    /* Pulsante più basso e snello */
+        font-weight: bold !important;
         border-radius: 10px !important;
     }
-    
-    /* Testo dentro i box Da/A */
-    div[data-testid="stTextInput"] input { 
-        font-size: 1.6rem !important; 
-        color: #00FF00 !important; 
-        font-weight: bold !important;
-        text-align: center !important;
+
+    /* 4. PULSANTE ESCI / CAMBIA ACCESSO (Più grande come richiesto) */
+    /* Puntiamo specificamente al tasto in alto a destra */
+    div[data-testid="stColumn"]:nth-child(2) .stButton button {
+        font-size: 1.45rem !important; 
+        color: #FF4B4B !important; /* Un tocco di rosso per distinguerlo */
+        border: 2px solid #FF4B4B !important;
     }
 
-    /* 4. BOTTONI NAVIGAZIONE E AZIONE - INGRANDITI */
-    .stButton button {
-        font-size: 1.35rem !important; /* Aumentato da 1.2 */
-        font-weight: bold !important;
-        height: 3.8rem !important;    /* Aumentato da 3.5 */
-        border-radius: 12px !important;
-    }
+    /* 5. SELEZIONA E DISPENSE - MEDIA GRANDEZZA */
+    div[data-testid="stSelectbox"] label p, div[data-testid="stExpander"] span p { font-size: 1.25rem !important; color: #FFD700 !important; font-weight: bold !important; }
+    div[data-baseweb="select"] div { font-size: 1.2rem !important; }
 
-    /* 5. SELEZIONA E DISPENSE - INGRANDITI */
-    /* Testo "Seleziona", "Scegli", "Dispense" */
-    div[data-testid="stSelectbox"] label p, 
-    div[data-testid="stExpander"] span p {
-        font-size: 1.35rem !important;
-        color: #FFD700 !important;
-        font-weight: bold !important;
-    }
-    
-    /* Testo dentro la scelta a tendina */
-    div[data-baseweb="select"] div {
-        font-size: 1.3rem !important;
-        padding: 5px !important;
-    }
-
-    /* BLOCO SELEZIONE TESTO */
+    /* BLOCO SELEZIONE TESTO ORIGINALE */
     html, body, [data-testid="stAppViewBlockContainer"], * {
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
+        -ms-user-select: none !important;
         user-select: none !important;
     }
     
-    /* AREA PROTEZIONE PDF (Lo scudo per il tasto grigio che hai inviato) */
+    /* AREA PROTEZIONE PDF */
     .container-pdf { position: relative; width: 100%; height: 800px; }
-    .overlay-stop-popout {
-        position: absolute;
-        top: 0; right: 0; width: 180px; height: 80px;
-        z-index: 99999; background: transparent;
-    }
+    .overlay-stop-popout { position: absolute; top: 0; right: 0; width: 180px; height: 80px; z-index: 99999; background: transparent; }
     </style>
 
     <script>
@@ -344,5 +309,6 @@ else:
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+
 
 
