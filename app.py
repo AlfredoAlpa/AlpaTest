@@ -14,95 +14,77 @@ st.markdown("""
     <style>
     [data-testid="stAppViewBlockContainer"] { padding-left: 2rem !important; padding-right: 2rem !important; max-width: 100% !important; }
     .stApp { background: linear-gradient(135deg, #1A3651 0%, #0D1B2A 100%); } 
-    .logo-style { font-family: 'Georgia', serif; font-size: 3.2rem; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
+    .logo-style { font-family: 'Georgia', serif; font-size: 3.5rem !important; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px #000; }
     
-    /* TESTO QUESITO PIÙ GRANDE */
-    .quesito-style { color: #FFEB3B !important; font-size: 1.85rem !important; font-weight: bold !important; line-height: 1.4; }
+    /* 1. TESTO QUESITO E RISPOSTE - FORMATO GIGANTE */
+    .quesito-style { color: #FFEB3B !important; font-size: 2rem !important; font-weight: bold !important; line-height: 1.4 !important; }
     
-    .timer-style { font-size: 2.7rem; font-weight: bold; text-align: right; color: #00FF00; }
-    
-    /* NOMI MATERIE GRANDI E CHIARE */
-    .nome-materia { 
-        font-size: 1.2rem !important; 
-        color: white !important; 
-        font-weight: bold; 
-        margin-top: 18px !important;
-        margin-bottom: 8px !important;
-        display: block;
+    /* Ingrandisce il testo delle opzioni A, B, C, D */
+    div[data-testid="stRadio"] label p {
+        font-size: 1.5rem !important;
+        color: white !important;
+        font-weight: 500 !important;
     }
     
-    .report-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #FFD700; }
-    hr { border-color: rgba(255,255,255,0.1); }
+    /* 2. CONFIGURAZIONE (DESTRA) - MATERIE PIÙ GRANDI */
+    .nome-materia { 
+        font-size: 1.3rem !important; 
+        color: #FFD700 !important; 
+        font-weight: bold !important; 
+        margin-top: 25px !important;
+        margin-bottom: 10px !important;
+        display: block !important;
+    }
     
-    /* BOX INPUT (DA/A) - PIÙ ALTI E VISIBILI */
+    /* 3. BOX INPUT (DA/A) - FINALMENTE ALTI */
+    div[data-testid="stTextInput"] { margin-top: -10px !important; }
+    
     div[data-testid="stTextInput"] div[data-baseweb="input"] { 
-        min-height: 48px !important; 
+        min-height: 55px !important; 
+        height: 55px !important;
         background-color: black !important; 
         border: 2px solid #FFD700 !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
     }
     
-    /* TESTO DENTRO I BOX - GRANDE E VERDE */
+    /* Testo dentro i box Da/A */
     div[data-testid="stTextInput"] input { 
-        padding: 5px 15px !important; 
-        font-size: 1.4rem !important; 
-        height: 48px !important; 
+        font-size: 1.6rem !important; 
         color: #00FF00 !important; 
         font-weight: bold !important;
+        text-align: center !important;
     }
 
-    /* INGRANDIMENTO TESTO DELLE OPZIONI (RADIO BUTTONS) */
-    .stRadio label p {
-        font-size: 1.3rem !important;
-        color: white !important;
-        line-height: 1.5;
+    /* 4. BOTTONI NAVIGAZIONE */
+    .stButton button {
+        font-size: 1.2rem !important;
+        height: 3.5rem !important;
     }
-    
-    /* BLOCCO SELEZIONE TESTO TOTALE */
+
+    /* BLOCO SELEZIONE TESTO */
     html, body, [data-testid="stAppViewBlockContainer"], * {
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
-        -ms-user-select: none !important;
         user-select: none !important;
     }
-    img { -webkit-user-drag: none; user-drag: none; }
-
-    /* STRUTTURA PER IL VELO SUL PDF */
-    .container-pdf {
-        position: relative;
-        width: 100%;
-        height: 800px;
-    }
+    
+    /* AREA PROTEZIONE PDF (Lo scudo per il tasto grigio che hai inviato) */
+    .container-pdf { position: relative; width: 100%; height: 800px; }
     .overlay-stop-popout {
         position: absolute;
-        top: 0;
-        right: 0;
-        width: 160px;
-        height: 60px;
-        z-index: 9999;
-        background: transparent;
-        cursor: default;
+        top: 0; right: 0; width: 180px; height: 80px;
+        z-index: 99999; background: transparent;
     }
     </style>
 
     <script>
-    const avvisoProtezione = () => {
-        alert('Funzione copia disabilitata. È possibile utilizzare questo sistema solo per la consultazione dei PDF di AlPaTest.');
-    };
     const doc = window.parent.document;
-    doc.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        avvisoProtezione();
-    }, true);
-    doc.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'p')) {
-            e.preventDefault();
-            avvisoProtezione();
-        }
+    doc.addEventListener('contextmenu', e => e.preventDefault(), true);
+    doc.addEventListener('keydown', e => {
+        if (e.ctrlKey && ['c', 'u', 's', 'p'].includes(e.key)) e.preventDefault();
     }, true);
     </script>
     """, unsafe_allow_html=True)
-
 # --- FUNZIONE RECUPERO DATI GOOGLE SHEETS ---
 def get_sheet_data(gid):
     try:
@@ -344,3 +326,4 @@ else:
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+
