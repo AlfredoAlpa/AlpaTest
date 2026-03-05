@@ -21,31 +21,50 @@ st.markdown("""
     .quesito-style { color: #FFEB3B !important; font-size: 2rem !important; font-weight: bold !important; line-height: 1.4 !important; }
     div[data-testid="stRadio"] label p { font-size: 1.5rem !important; color: white !important; }
     
-    /* 2. CONFIGURAZIONE (DESTRA) - RIMANE COME TI PIACE */
-    .nome-materia { font-size: 1.3rem !important; color: #FFD700 !important; font-weight: bold !important; margin-top: 25px !important; margin-bottom: 10px !important; display: block !important; }
-    div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 55px !important; height: 55px !important; background-color: black !important; border: 2px solid #FFD700 !important; border-radius: 10px !important; }
-    div[data-testid="stTextInput"] input { font-size: 1.6rem !important; color: #00FF00 !important; font-weight: bold !important; text-align: center !important; }
+    /* 2. CONFIGURAZIONE (DESTRA) - BOX RIDOTTI IN ALTEZZA */
+    .nome-materia { 
+        font-size: 1.15rem !important; 
+        color: #FFD700 !important; 
+        font-weight: bold !important; 
+        margin-top: 15px !important;
+        margin-bottom: 5px !important;
+        display: block !important;
+    }
+    
+    /* Riduzione altezza dei box e della scritta Da/A */
+    div[data-testid="stTextInput"] { margin-top: -5px !important; }
+    
+    div[data-testid="stTextInput"] div[data-baseweb="input"] { 
+        min-height: 38px !important; /* Ridotto da 55px */
+        height: 38px !important;
+        background-color: black !important; 
+        border: 2px solid #FFD700 !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Scritta interna (Numeri Verdi) proporzionata ai nuovi box */
+    div[data-testid="stTextInput"] input { 
+        font-size: 1.25rem !important; /* Leggermente più piccola per stare nel box */
+        color: #00FF00 !important; 
+        font-weight: bold !important;
+        text-align: center !important;
+        padding: 2px !important;
+    }
 
-    /* 3. PULSANTI NAVIGAZIONE (Ristretti come richiesto) */
-    /* Precedente, Successivo, Consegna, Importa */
+    /* 3. PULSANTI (Come calibrati prima) */
     .stButton button {
-        font-size: 1.25rem !important; /* Scritta leggermente ridotta */
-        height: 3.2rem !important;    /* Pulsante più basso e snello */
+        font-size: 1.25rem !important;
+        height: 3.2rem !important;
         font-weight: bold !important;
         border-radius: 10px !important;
     }
 
-    /* 4. PULSANTE ESCI / CAMBIA ACCESSO (Più grande come richiesto) */
-    /* Puntiamo specificamente al tasto in alto a destra */
+    /* Tasto Esci/Cambia Accesso */
     div[data-testid="stColumn"]:nth-child(2) .stButton button {
-        font-size: 1.45rem !important; 
-        color: #FF4B4B !important; /* Un tocco di rosso per distinguerlo */
+        font-size: 1.4rem !important; 
+        color: #FF4B4B !important; 
         border: 2px solid #FF4B4B !important;
     }
-
-    /* 5. SELEZIONA E DISPENSE - MEDIA GRANDEZZA */
-    div[data-testid="stSelectbox"] label p, div[data-testid="stExpander"] span p { font-size: 1.25rem !important; color: #FFD700 !important; font-weight: bold !important; }
-    div[data-baseweb="select"] div { font-size: 1.2rem !important; }
 
     /* BLOCO SELEZIONE TESTO ORIGINALE */
     html, body, [data-testid="stAppViewBlockContainer"], * {
@@ -309,6 +328,7 @@ else:
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+
 
 
 
