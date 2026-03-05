@@ -10,6 +10,7 @@ from fpdf import FPDF
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # --- PROTEZIONE AVANZATA (CSS + JS) ---
+# --- PROTEZIONE AVANZATA (CSS + JS) ---
 st.markdown("""
     <style>
     [data-testid="stAppViewBlockContainer"] { padding-left: 2rem !important; padding-right: 2rem !important; max-width: 100% !important; }
@@ -55,10 +56,27 @@ st.markdown("""
         text-align: center !important;
     }
 
-    /* 4. BOTTONI NAVIGAZIONE */
+    /* 4. BOTTONI NAVIGAZIONE E AZIONE - INGRANDITI */
     .stButton button {
-        font-size: 1.2rem !important;
-        height: 3.5rem !important;
+        font-size: 1.35rem !important; /* Aumentato da 1.2 */
+        font-weight: bold !important;
+        height: 3.8rem !important;    /* Aumentato da 3.5 */
+        border-radius: 12px !important;
+    }
+
+    /* 5. SELEZIONA E DISPENSE - INGRANDITI */
+    /* Testo "Seleziona", "Scegli", "Dispense" */
+    div[data-testid="stSelectbox"] label p, 
+    div[data-testid="stExpander"] span p {
+        font-size: 1.35rem !important;
+        color: #FFD700 !important;
+        font-weight: bold !important;
+    }
+    
+    /* Testo dentro la scelta a tendina */
+    div[data-baseweb="select"] div {
+        font-size: 1.3rem !important;
+        padding: 5px !important;
     }
 
     /* BLOCO SELEZIONE TESTO */
@@ -326,4 +344,5 @@ else:
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+
 
