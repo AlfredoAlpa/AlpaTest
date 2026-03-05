@@ -152,7 +152,9 @@ def importa_quesiti():
         df_p = get_sheet_data("614003066")
         if not df_p.empty:
             st.session_state.punteggi = {"Corretta": float(df_p.iloc[0,0]), "Non Data": float(df_p.iloc[0,1]), "Errata": float(df_p.iloc[0,2])}
-        frames = [df.iloc[int(st.session_state[f"da_{i}"])-1 : int(st.session_state[f"a_{i}"])] for i in range(9) if st.session_state.get(f"da_{i}","").isdigit()]
+        # MODIFICA INTELLIGENTE: range basato sul numero di discipline nel dizionario
+        num_discipline = len(dict_discipline)
+        frames = [df.iloc[int(st.session_state[f"da_{i}"])-1 : int(st.session_state[f"a_{i}"])] for i in range(num_discipline) if st.session_state.get(f"da_{i}","").isdigit()]
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
             st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
@@ -234,7 +236,9 @@ else:
             else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
         with c_dx:
             st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
-            for i in range(9):
+            # MODIFICA INTELLIGENTE: range basato sul numero di discipline caricate dal dizionario
+            num_discipline = len(dict_discipline)
+            for i in range(num_discipline):
                 cod_mat = list(dict_discipline.keys())[i] if i < len(dict_discipline) else f"G{i+1}"
                 st.markdown(f"<p class='nome-materia'>{cod_mat}: {dict_discipline.get(cod_mat, f'Gruppo {i+1}')}</p>", unsafe_allow_html=True)
                 c_d, c_a = st.columns(2)
