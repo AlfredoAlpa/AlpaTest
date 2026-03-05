@@ -1,3 +1,4 @@
+# Alpa1 - Versione Stabile con Logout, Promo e Scudo PDF
 import streamlit as st
 import pandas as pd
 import os
@@ -23,14 +24,31 @@ st.markdown("""
     div[data-testid="stTextInput"] div[data-baseweb="input"] { min-height: 28px !important; height: 28px !important; background-color: black !important; }
     div[data-testid="stTextInput"] input { padding: 0px 10px !important; font-size: 0.85rem !important; height: 28px !important; }
     
-    /* Impedisce la selezione visiva del testo */
-    * {
+    /* BLOCO SELEZIONE TESTO TOTALE (Body e HTML) */
+    html, body, [data-testid="stAppViewBlockContainer"], * {
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
         user-select: none !important;
     }
     img { -webkit-user-drag: none; user-drag: none; }
+
+    /* STRUTTURA PER IL VELO SUL PDF */
+    .container-pdf {
+        position: relative;
+        width: 100%;
+        height: 800px;
+    }
+    .overlay-stop-popout {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 160px; /* Area che copre il tasto pop-out di Google */
+        height: 60px;
+        z-index: 9999;
+        background: transparent; /* Invisibile ma blocca i clic */
+        cursor: default;
+    }
     </style>
 
     <script>
@@ -187,9 +205,16 @@ if st.session_state.pdf_id_selezionato:
         st.session_state.pdf_id_selezionato = None
         st.rerun()
     st.markdown('<div class="spacer-pdf"></div>', unsafe_allow_html=True)
-    st.markdown(f'<iframe src="https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview" width="100%" height="800" style="border:none; background:white; border-radius:10px;"></iframe>', unsafe_allow_html=True)
+    # APPLICAZIONE DEL VELO INVISIBILE SUL PDF
+    st.markdown(f'''
+        <div class="container-pdf">
+            <div class="overlay-stop-popout"></div>
+            <iframe src="https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview" 
+                    width="100%" height="800" style="border:none; background:white; border-radius:10px;">
+            </iframe>
+        </div>
+    ''', unsafe_allow_html=True)
 else:
-    # MODIFICA: Inserito tasto Logout nell'header
     t1, t2 = st.columns([7, 3])
     with t1: 
         titolo_app = "AlPaTest (PROMO)" if st.session_state.is_promo else "AlPaTest"
