@@ -34,19 +34,14 @@ st.markdown("""
     </style>
 
     <script>
-    // Funzione universale per l'avviso
     const avvisoProtezione = () => {
         alert('Funzione copia disabilitata. È possibile utilizzare questo sistema solo per la consultazione dei PDF di AlPaTest.');
     };
-
-    // Applica i blocchi al documento principale (parent) per bypassare l'iframe di Streamlit
     const doc = window.parent.document;
-
     doc.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         avvisoProtezione();
     }, true);
-
     doc.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'p')) {
             e.preventDefault();
@@ -67,6 +62,7 @@ def get_sheet_data(gid):
 
 # --- INIZIALIZZAZIONE STATO ---
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
+if 'is_promo' not in st.session_state: st.session_state.is_promo = False # Nuova variabile per il bivio
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
 if 'pdf_id_selezionato' not in st.session_state: st.session_state.pdf_id_selezionato = None
 if 'df_filtrato' not in st.session_state: st.session_state.df_filtrato = pd.DataFrame()
@@ -118,16 +114,31 @@ def genera_report_pdf():
         pdf.ln(4) 
     return bytes(pdf.output())
 
-# --- LOGIN ---
+# --- LOGIN CON BIVIO PROMO/FULL ---
 if not st.session_state.autenticato:
-    st.markdown('<div style="border: 3px solid #FFD700; border-radius: 20px; padding: 40px; background-color: rgba(0,0,0,0.6); text-align: center; max-width: 650px; margin: 40px auto;"><h1 style="color: #FFD700; font-size: 2.4rem;">🔐 Accesso AlPaTest</h1><p style="color: white; font-size: 1.25rem;">Benvenuta/o. Inserisci il codice per iniziare.</p></div>', unsafe_allow_html=True)
-    codice = st.text_input("Inserisci codice:", type="password", label_visibility="collapsed")
-    if st.button("ENTRA"):
-        df_codici_access = get_sheet_data("184205490")
-        if not df_codici_access.empty and codice in df_codici_access.iloc[:,0].astype(str).values:
+    st.markdown('<div style="border: 3px solid #FFD700; border-radius: 20px; padding: 40px; background-color: rgba(0,0,0,0.6); text-align: center; max-width: 650px; margin: 40px auto;"><h1 style="color: #FFD700; font-size: 2.4rem;">🔐 Accesso AlPaTest</h1><p style="color: white; font-size: 1.25rem;">Benvenuta/o. Scegli come accedere.</p></div>', unsafe_allow_html=True)
+    
+    col_full, col_promo = st.columns(2)
+    
+    with col_full:
+        st.markdown("<p style='color:white; text-align:center;'>Accesso Utenti Registrati</p>", unsafe_allow_html=True)
+        codice = st.text_input("Inserisci codice Full:", type="password", label_visibility="collapsed")
+        if st.button("ENTRA (VERSIONE FULL)", use_container_width=True):
+            df_codici_access = get_sheet_data("184205490")
+            if not df_codici_access.empty and codice in df_codici_access.iloc[:,0].astype(str).values:
+                st.session_state.autenticato = True
+                st.session_state.is_promo = False
+                st.rerun()
+            else: st.error("Codice errato")
+            
+    with col_promo:
+        st.markdown("<p style='color:white; text-align:center;'>Vuoi provare il sistema?</p>", unsafe_allow_html=True)
+        st.write("") # Spazio estetico
+        if st.button("🚀 PROVA LA PROMO GRATUITA", use_container_width=True, type="primary"):
             st.session_state.autenticato = True
+            st.session_state.is_promo = True
             st.rerun()
-        else: st.error("Codice errato")
+            
     st.stop()
 
 # --- CARICAMENTO RISORSE ---
@@ -147,18 +158,21 @@ codici_dispense = carica_codici_dispense()
 
 def importa_quesiti():
     try:
-        df = get_sheet_data("0")
+        # BIVIO DATI QUESITI (FULL o PROMO)
+        gid_quesiti = "326583620" if st.session_state.is_promo else "0" # <--- CONTROLLA GID PROMOTEST
+        df = get_sheet_data(gid_quesiti)
+        
         df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
         df_p = get_sheet_data("614003066")
         if not df_p.empty:
             st.session_state.punteggi = {"Corretta": float(df_p.iloc[0,0]), "Non Data": float(df_p.iloc[0,1]), "Errata": float(df_p.iloc[0,2])}
-        # MODIFICA INTELLIGENTE: range basato sul numero di discipline nel dizionario
+        
         num_discipline = len(dict_discipline)
         frames = [df.iloc[int(st.session_state[f"da_{i}"])-1 : int(st.session_state[f"a_{i}"])] for i in range(num_discipline) if st.session_state.get(f"da_{i}","").isdigit()]
         if frames:
             st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
             st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
-    except Exception as e: st.error(f"Errore: {e}")
+    except Exception as e: st.error(f"Errore caricamento: {e}")
 
 @st.fragment(run_every=1)
 def mostra_timer():
@@ -176,7 +190,9 @@ if st.session_state.pdf_id_selezionato:
     st.markdown(f'<iframe src="https://drive.google.com/file/d/{st.session_state.pdf_id_selezionato}/preview" width="100%" height="800" style="border:none; background:white; border-radius:10px;"></iframe>', unsafe_allow_html=True)
 else:
     t1, t2 = st.columns([7, 3])
-    with t1: st.markdown('<div class="logo-style">AlPaTest</div>', unsafe_allow_html=True)
+    with t1: 
+        titolo_app = "AlPaTest (PROMO)" if st.session_state.is_promo else "AlPaTest"
+        st.markdown(f'<div class="logo-style">{titolo_app}</div>', unsafe_allow_html=True)
     with t2: mostra_timer()
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -186,7 +202,12 @@ else:
         c_pdf, c_new = st.columns(2)
         with c_pdf: st.download_button("📥 SCARICA REPORT PDF", genera_report_pdf(), "Report_AlPaTest.pdf", "application/pdf")
         with c_new: 
-            if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): st.session_state.clear(); st.rerun()
+            if st.button("🔄 NUOVA SIMULAZIONE", use_container_width=True): 
+                # Se è promo, azzeriamo ma restiamo autenticati
+                st.session_state.df_filtrato = pd.DataFrame()
+                st.session_state.risposte_date = {}
+                st.session_state.fase = "PROVA"
+                st.rerun()
         for i, row in st.session_state.df_filtrato.iterrows():
             tua, corr = st.session_state.risposte_date.get(i, "N.D."), str(row['Corretta']).strip()
             colore = "#00FF00" if tua == corr else "#FF4B4B"
@@ -201,15 +222,30 @@ else:
                         icona = "✅" if i in st.session_state.risposte_date else "⚪"
                         if st.button(f"{icona} Quesito {i+1}", key=f"nav_{i}", use_container_width=True): st.session_state.indice = i; st.rerun()
             st.write("---")
+            
+            # BIVIO DISPENSE (PROMO sbloccata, FULL richiede codice)
             with st.expander("📚 DISPENSE", expanded=True):
-                if st.session_state.codice_dispense_valido == "":
-                    cod_s = st.text_input("Codice sblocco:", type="password")
-                    if cod_s.strip().lower() in codici_dispense: st.session_state.codice_dispense_valido = cod_s.strip().lower(); st.rerun()
-                if st.session_state.codice_dispense_valido != "":
-                    df_disp = get_sheet_data("2095138066") 
+                if st.session_state.is_promo:
+                    st.info("Modalità Promo: Accesso libero alla presentazione.")
+                    df_disp = get_sheet_data("272698671") # <--- CONTROLLA GID PROMODISPENSE
                     if not df_disp.empty:
                         sel = st.selectbox("Seleziona:", df_disp.iloc[:, 0].dropna().tolist(), index=None, placeholder="Scegli...")
-                        if sel and st.button("📖 APRI DISPENSA"): st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip(); st.rerun()
+                        if sel and st.button("📖 APRI DISPENSA"): 
+                            st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
+                            st.rerun()
+                else:
+                    if st.session_state.codice_dispense_valido == "":
+                        cod_s = st.text_input("Codice sblocco Full:", type="password")
+                        if cod_s.strip().lower() in codici_dispense: 
+                            st.session_state.codice_dispense_valido = cod_s.strip().lower()
+                            st.rerun()
+                    if st.session_state.codice_dispense_valido != "":
+                        df_disp = get_sheet_data("2095138066") 
+                        if not df_disp.empty:
+                            sel = st.selectbox("Seleziona:", df_disp.iloc[:, 0].dropna().tolist(), index=None, placeholder="Scegli...")
+                            if sel and st.button("📖 APRI DISPENSA"): 
+                                st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0] == sel].iloc[0, 1]).strip()
+                                st.rerun()
         with c_ct:
             if not st.session_state.df_filtrato.empty:
                 q = st.session_state.df_filtrato.iloc[st.session_state.indice]
@@ -227,16 +263,16 @@ else:
                 if b2.button("Successivo ➡️") and st.session_state.indice < len(st.session_state.df_filtrato)-1: st.session_state.indice += 1; st.rerun()
                 if b3.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
                 
-                # --- TASTO HELP ORIGINALE ---
                 st.write("") 
                 with st.expander("💡 HAI BISOGNO DI AIUTO? (Clicca qui per Aprire/Chiudere)"):
-                    url_help_full = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
-                    st.markdown(f'<iframe src="{url_help_full}" width="100%" height="700" allow="autoplay"></iframe>', unsafe_allow_html=True)
+                    url_help = "https://drive.google.com/file/d/1XtcQswWHCQvErUJ61OMfF97Psq1UvhKo/preview?authuser=0"
+                    st.markdown(f'<iframe src="{url_help}" width="100%" height="700" allow="autoplay"></iframe>', unsafe_allow_html=True)
                     st.caption("Usa la freccetta in alto a destra nel riquadro per ingrandire.")
-            else: st.info("Configura gli intervalli a destra e clicca su 'IMPORTA QUESITI'")
+            else: 
+                msg = "Configura gli intervalli (max 10 per materia in Promo) e clicca su 'IMPORTA'" if st.session_state.is_promo else "Configura gli intervalli e clicca su 'IMPORTA QUESITI'"
+                st.info(msg)
         with c_dx:
             st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
-            # MODIFICA INTELLIGENTE: range basato sul numero di discipline caricate dal dizionario
             num_discipline = len(dict_discipline)
             for i in range(num_discipline):
                 cod_mat = list(dict_discipline.keys())[i] if i < len(dict_discipline) else f"G{i+1}"
