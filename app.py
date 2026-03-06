@@ -30,9 +30,7 @@ st.markdown("""
         display: block !important;
     }
     
-    /* Riduzione altezza dei box e della scritta Da/A */
     div[data-testid="stTextInput"] { margin-top: -5px !important; }
-    
     div[data-testid="stTextInput"] div[data-baseweb="input"] { 
         min-height: 38px !important; 
         height: 38px !important;
@@ -41,7 +39,6 @@ st.markdown("""
         border-radius: 8px !important;
     }
     
-    /* Scritta interna (Numeri Verdi) proporzionata ai nuovi box */
     div[data-testid="stTextInput"] input { 
         font-size: 1.25rem !important; 
         color: #00FF00 !important; 
@@ -50,7 +47,7 @@ st.markdown("""
         padding: 2px !important;
     }
 
-    /* 3. PULSANTI */
+    /* 3. PULSANTI GENERALI */
     .stButton button {
         font-size: 1.25rem !important;
         height: 3.2rem !important;
@@ -58,11 +55,13 @@ st.markdown("""
         border-radius: 10px !important;
     }
 
-    /* MODIFICA MIRATA: SOLO TESTO PULSANTE PROMO BIANCO */
-    div[data-testid="stColumn"]:nth-of-type(2) button[kind="primary"] {
-        color: white !important;
+    /* --- FIX DEFINITIVO: TESTO NERO SU ROSSO --- */
+    /* Applica il nero al testo e all'icona del pulsante Promo per massima leggibilità */
+    div[data-testid="stColumn"]:nth-of-type(2) button[kind="primary"] p {
+        color: black !important;
+        font-weight: 900 !important;
     }
-
+    
     /* Tasto Esci/Cambia Accesso */
     div[data-testid="stColumn"]:nth-child(2) .stButton button {
         font-size: 1.4rem !important; 
@@ -240,7 +239,7 @@ else:
         titolo_app = "AlPaTest (PROMO)" if st.session_state.is_promo else "AlPaTest"
         st.markdown(f'<div class="logo-style">{titolo_app}</div>', unsafe_allow_html=True)
     with t2: 
-        mostra_timer()
+        most_timer()
         if st.button("🚪 PROMO / Esci", use_container_width=True):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
