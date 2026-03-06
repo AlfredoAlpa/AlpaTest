@@ -10,7 +10,6 @@ from fpdf import FPDF
 st.set_page_config(page_title="AIPaTest - CONCORSI", layout="wide")
 
 # --- PROTEZIONE AVANZATA (CSS + JS) ---
-# --- PROTEZIONE AVANZATA (CSS + JS) ---
 st.markdown("""
     <style>
     [data-testid="stAppViewBlockContainer"] { padding-left: 2rem !important; padding-right: 2rem !important; max-width: 100% !important; }
@@ -35,7 +34,7 @@ st.markdown("""
     div[data-testid="stTextInput"] { margin-top: -5px !important; }
     
     div[data-testid="stTextInput"] div[data-baseweb="input"] { 
-        min-height: 38px !important; /* Ridotto da 55px */
+        min-height: 38px !important; 
         height: 38px !important;
         background-color: black !important; 
         border: 2px solid #FFD700 !important;
@@ -44,19 +43,24 @@ st.markdown("""
     
     /* Scritta interna (Numeri Verdi) proporzionata ai nuovi box */
     div[data-testid="stTextInput"] input { 
-        font-size: 1.25rem !important; /* Leggermente più piccola per stare nel box */
+        font-size: 1.25rem !important; 
         color: #00FF00 !important; 
         font-weight: bold !important;
         text-align: center !important;
         padding: 2px !important;
     }
 
-    /* 3. PULSANTI (Come calibrati prima) */
+    /* 3. PULSANTI */
     .stButton button {
         font-size: 1.25rem !important;
         height: 3.2rem !important;
         font-weight: bold !important;
         border-radius: 10px !important;
+    }
+
+    /* MODIFICA MIRATA: SOLO TESTO PULSANTE PROMO BIANCO */
+    div[data-testid="stColumn"]:nth-of-type(2) button[kind="primary"] {
+        color: white !important;
     }
 
     /* Tasto Esci/Cambia Accesso */
@@ -87,6 +91,7 @@ st.markdown("""
     }, true);
     </script>
     """, unsafe_allow_html=True)
+
 # --- FUNZIONE RECUPERO DATI GOOGLE SHEETS ---
 def get_sheet_data(gid):
     try:
@@ -158,7 +163,6 @@ if not st.session_state.autenticato:
     
     with col_full:
         st.markdown("<p style='color:white; text-align:center;'>Accesso Utenti Registrati</p>", unsafe_allow_html=True)
-        # MODIFICA: Aggiunto placeholder
         codice = st.text_input("Inserisci codice Full:", type="password", label_visibility="collapsed", placeholder="Inserisci il tuo codice")
         if st.button("ENTRA (VERSIONE FULL)", use_container_width=True):
             df_codici_access = get_sheet_data("184205490")
@@ -237,7 +241,6 @@ else:
         st.markdown(f'<div class="logo-style">{titolo_app}</div>', unsafe_allow_html=True)
     with t2: 
         mostra_timer()
-        # MODIFICA: Inserito "PROMO" nel testo del pulsante
         if st.button("🚪 PROMO / Esci", use_container_width=True):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
