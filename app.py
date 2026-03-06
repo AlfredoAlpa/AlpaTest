@@ -158,7 +158,8 @@ if not st.session_state.autenticato:
     
     with col_full:
         st.markdown("<p style='color:white; text-align:center;'>Accesso Utenti Registrati</p>", unsafe_allow_html=True)
-        codice = st.text_input("Inserisci codice Full:", type="password", label_visibility="collapsed")
+        # MODIFICA: Aggiunto placeholder
+        codice = st.text_input("Inserisci codice Full:", type="password", label_visibility="collapsed", placeholder="Inserisci il tuo codice")
         if st.button("ENTRA (VERSIONE FULL)", use_container_width=True):
             df_codici_access = get_sheet_data("184205490")
             if not df_codici_access.empty and codice in df_codici_access.iloc[:,0].astype(str).values:
@@ -236,7 +237,8 @@ else:
         st.markdown(f'<div class="logo-style">{titolo_app}</div>', unsafe_allow_html=True)
     with t2: 
         mostra_timer()
-        if st.button("🚪 Esci / Cambia Accesso", use_container_width=True):
+        # MODIFICA: Inserito "PROMO" nel testo del pulsante
+        if st.button("🚪 PROMO / Esci", use_container_width=True):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
@@ -328,7 +330,3 @@ else:
             st.write("---")
             st.checkbox("Simulazione (30 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
-
-
-
-
