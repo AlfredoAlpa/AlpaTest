@@ -34,11 +34,14 @@ st.markdown("""
     /* 3. PULSANTI */
     .stButton button { font-size: 1.25rem !important; height: 3.2rem !important; font-weight: bold !important; border-radius: 10px !important; }
 
-    /* FIX TESTO NERO SU PROMO */
+    /* FIX SCRITTA PROMO NERA */
     div[data-testid="stColumn"]:nth-of-type(2) button[kind="primary"] p {
         color: black !important;
         font-weight: 900 !important;
     }
+
+    /* Tasto Esci */
+    div[data-testid="stColumn"]:nth-child(2) .stButton button { color: #FF4B4B !important; border: 2px solid #FF4B4B !important; }
 
     html, body, [data-testid="stAppViewBlockContainer"], * {
         -webkit-user-select: none !important;
@@ -61,15 +64,43 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNZIONI DATI ---
+# --- 2. DEFINIZIONE FUNZIONI (L'ORDINE È IMPORTANTE) ---
+
 def get_sheet_data(gid):
     try:
         base_url = st.secrets["gsheets_url"].split("/edit")[0]
         csv_url = f"{base_url}/export?format=csv&gid={gid}"
         return pd.read_csv(csv_url)
-    except Exception as e: return pd.DataFrame()
+    except Exception as e:
+        return pd.DataFrame()
 
-# --- INIZIALIZZAZIONE ---
+@st.cache_data
+def carica_discipline():
+    df_d = get_sheet_data("652955788") 
+    if not df_d.empty:
+        return pd.Series(df_d.Disciplina.values, index=df_d.Codice.astype(str)).to_dict()
+    return {}
+
+def importa_quesiti():
+    try:
+        gid_quesiti = "326583620" if st.session_state.is_promo else "0" 
+        df = get_sheet_data(gid_quesiti)
+        df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
+        dict_d = carica_discipline()
+        num_discipline = len(dict_d)
+        frames = [df.iloc[int(st.session_state[f"da_{i}"])-1 : int(st.session_state[f"a_{i}"])] for i in range(num_discipline) if st.session_state.get(f"da_{i}","").isdigit()]
+        if frames:
+            st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
+            st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
+    except Exception as e: st.error(f"Errore caricamento: {e}")
+
+@st.fragment(run_every=1)
+def mostra_timer():
+    if st.session_state.start_time and st.session_state.get("simulazione", False):
+        rimanente = max(0, 1800 - (time.time() - st.session_state.start_time))
+        st.markdown(f'<p style="color:white; font-size:1.5rem; text-align:right;">⏱️ {int(rimanente//60):02d}:{int(rimanente%60):02d}</p>', unsafe_allow_html=True)
+
+# --- 3. INIZIALIZZAZIONE STATO ---
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
 if 'is_promo' not in st.session_state: st.session_state.is_promo = False 
 if 'fase' not in st.session_state: st.session_state.fase = "PROVA"
@@ -79,40 +110,18 @@ if 'indice' not in st.session_state: st.session_state.indice = 0
 if 'risposte_date' not in st.session_state: st.session_state.risposte_date = {}
 if 'start_time' not in st.session_state: st.session_state.start_time = None
 
-# --- FUNZIONI ---
-def importa_quesiti():
-    try:
-        gid = "326583620" if st.session_state.is_promo else "0" 
-        df = get_sheet_data(gid)
-        df.columns = ['Domanda','opz_A','opz_B','opz_C','opz_D','Corretta','Argomento','Immagine']
-        num = len(dict_discipline)
-        frames = [df.iloc[int(st.session_state[f"da_{i}"])-1 : int(st.session_state[f"a_{i}"])] for i in range(num) if st.session_state.get(f"da_{i}","").isdigit()]
-        if frames:
-            st.session_state.df_filtrato = pd.concat(frames).reset_index(drop=True)
-            st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
-    except Exception as e: st.error(f"Errore: {e}")
-
-@st.fragment(run_every=1)
-def mostra_timer():
-    if st.session_state.start_time and st.session_state.get("simulazione", False):
-        rimanente = max(0, 1800 - (time.time() - st.session_state.start_time))
-        st.markdown(f'<p style="color:white; font-size:1.5rem; text-align:right;">⏱️ {int(rimanente//60):02d}:{int(rimanente%60):02d}</p>', unsafe_allow_html=True)
-
-dict_discipline = carica_discipline() if 'carica_discipline' in locals() else {}
-# (Nota: assicurati che carica_discipline() sia definita come nel tuo codice originale)
-
-# --- LOGIN ---
+# --- 4. LOGIN ---
 if not st.session_state.autenticato:
     st.markdown('<div style="text-align: center; max-width: 650px; margin: 40px auto;"><h1 style="color: #FFD700; font-size: 2.4rem;">🔐 Accesso AlPaTest</h1></div>', unsafe_allow_html=True)
     col_full, col_promo = st.columns(2)
     with col_full:
-        codice = st.text_input("Codice Full:", type="password", placeholder="Codice")
+        codice = st.text_input("Codice Full:", type="password", placeholder="Inserisci codice")
         if st.button("ENTRA (VERSIONE FULL)", use_container_width=True):
-            df_c = get_sheet_data("184205490")
-            if not df_c.empty and codice in df_c.iloc[:,0].astype(str).values:
-                st.session_state.autenticato = True
-                st.session_state.is_promo = False
+            df_codici = get_sheet_data("184205490")
+            if not df_codici.empty and codice in df_codici.iloc[:,0].astype(str).values:
+                st.session_state.autenticato, st.session_state.is_promo = True, False
                 st.rerun()
+            else: st.error("Codice errato")
     with col_promo:
         st.write("Vuoi provare il sistema?")
         if st.button("🚀 PROVA LA PROMO GRATUITA", use_container_width=True, type="primary"):
@@ -120,12 +129,13 @@ if not st.session_state.autenticato:
             st.rerun()
     st.stop()
 
-# --- APP PRINCIPALE ---
+# --- 5. APP PRINCIPALE ---
+dict_discipline = carica_discipline()
+
 if st.session_state.pdf_id_selezionato:
     if st.button("⬅️ CHIUDI DISPENSA"): 
         st.session_state.pdf_id_selezionato = None
         st.rerun()
-    # IL PDF CON LO SCUDO
     st.markdown(f'''
         <div class="container-pdf">
             <div class="overlay-stop-popout"></div>
@@ -134,42 +144,44 @@ if st.session_state.pdf_id_selezionato:
     ''', unsafe_allow_html=True)
 else:
     t1, t2 = st.columns([7, 3])
-    with t1: st.markdown(f'<div class="logo-style">AlPaTest {"(PROMO)" if st.session_state.is_promo else ""}</div>', unsafe_allow_html=True)
+    with t1: 
+        titolo = "AlPaTest (PROMO)" if st.session_state.is_promo else "AlPaTest"
+        st.markdown(f'<div class="logo-style">{titolo}</div>', unsafe_allow_html=True)
     with t2: 
         mostra_timer()
         if st.button("🚪 Esci / Cambia Accesso", use_container_width=True):
             for key in list(st.session_state.keys()): del st.session_state[key]
             st.rerun()
 
+    st.markdown("<hr>", unsafe_allow_html=True)
+
     c_sx, c_ct, c_dx = st.columns([2.5, 6.5, 3])
+    
     with c_sx:
-        st.write("Navigazione")
+        st.markdown('<p style="color:white; font-weight:bold;">Navigazione</p>', unsafe_allow_html=True)
         with st.container(height=300):
             if not st.session_state.df_filtrato.empty:
                 for i in range(len(st.session_state.df_filtrato)):
                     if st.button(f"Quesito {i+1}", key=f"n_{i}", use_container_width=True): st.session_state.indice = i; st.rerun()
         
-        # --- SEZIONE DISPENSE RIPRISTINATA ---
         st.write("---")
         with st.expander("📚 DISPENSE", expanded=True):
-            if st.session_state.is_promo:
-                st.info("Modalità Promo: Accesso libero.")
-                df_disp = get_sheet_data("272698671") 
-                if not df_disp.empty:
-                    sel = st.selectbox("Seleziona:", df_disp.iloc[:,0].tolist(), index=None)
-                    if sel and st.button("📖 APRI"):
-                        st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0]==sel].iloc[0,1]).strip()
-                        st.rerun()
+            st.info("Modalità Promo: Accesso libero.")
+            df_disp = get_sheet_data("272698671")
+            if not df_disp.empty:
+                sel = st.selectbox("Seleziona:", df_disp.iloc[:,0].tolist(), index=None, key="sel_disp")
+                if sel and st.button("📖 APRI DISPENSA", use_container_width=True):
+                    st.session_state.pdf_id_selezionato = str(df_disp[df_disp.iloc[:,0]==sel].iloc[0,1]).strip()
+                    st.rerun()
 
     with c_ct:
         if not st.session_state.df_filtrato.empty:
             q = st.session_state.df_filtrato.iloc[st.session_state.indice]
             st.markdown(f'<div class="quesito-style">{st.session_state.indice+1}. {q["Domanda"]}</div>', unsafe_allow_html=True)
             opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
-            scelta = st.radio("Risposta:", opzioni, key=f"r_{st.session_state.indice}")
+            scelta = st.radio("Scegli la risposta:", opzioni, key=f"r_{st.session_state.indice}")
             if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
             
-            # TASTI NAVIGAZIONE RIPRISTINATI
             st.write("---")
             b1, b2, b3 = st.columns(3)
             if b1.button("⬅️ Precedente", use_container_width=True) and st.session_state.indice > 0:
@@ -178,15 +190,16 @@ else:
                 st.session_state.indice += 1; st.rerun()
             if b3.button("🏁 CONSEGNA", use_container_width=True): 
                 st.session_state.fase = "FINE"; st.rerun()
-        else: st.info("Configura a destra.")
+        else: st.info("Configura gli intervalli a destra per iniziare.")
 
     with c_dx:
-        st.write("Configurazione")
-        dict_discipline = carica_discipline() # Carica i nomi corretti
+        st.markdown('<p style="background:#FFF;color:#000;text-align:center;font-weight:bold;padding:5px;border-radius:5px;">Configurazione</p>', unsafe_allow_html=True)
         for i, (cod, nome) in enumerate(dict_discipline.items()):
             st.markdown(f"<p class='nome-materia'>{cod}: {nome}</p>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
-            c1.text_input("da", key=f"da_{i}", label_visibility="collapsed")
-            c2.text_input("a", key=f"a_{i}", label_visibility="collapsed")
-        st.checkbox("Simulazione", key="simulazione")
-        st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+            c1.text_input("da", key=f"da_{i}", label_visibility="collapsed", placeholder="Da")
+            c2.text_input("a", key=f"a_{i}", label_visibility="collapsed", placeholder="A")
+        
+        st.write("---")
+        st.checkbox("Simulazione (Timer 30 min)", key="simulazione")
+        st.button("🚀 IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
