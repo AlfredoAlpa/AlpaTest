@@ -332,6 +332,7 @@ else:
                 c_d.text_input("da", key=f"da_{i}", label_visibility="collapsed", placeholder="Da")
                 c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed", placeholder="A")
             st.write("---")
-            st.checkbox("Simulazione (30 min)", key="simulazione")
+            st.checkbox("Simulazione (45 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+
 
