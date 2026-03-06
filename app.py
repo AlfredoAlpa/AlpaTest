@@ -58,6 +58,12 @@ st.markdown("""
         border-radius: 10px !important;
     }
 
+    /* MODIFICA RICHIESTA: Colore nero per il testo del pulsante Promo */
+    div[data-testid="stColumn"]:nth-of-type(2) button[kind="primary"] p {
+        color: black !important;
+        font-weight: 900 !important;
+    }
+
     /* Tasto Esci/Cambia Accesso - Forzatura Scritta Rossa */
     div[data-testid="stColumn"]:nth-child(2) .stButton button {
         font-size: 1.4rem !important; 
