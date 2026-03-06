@@ -96,7 +96,7 @@ def calcola_risultati():
     return esatte, errate, non_date, round(punti, 2)
 
 def genera_report_pdf():
-    esatte, errate, non_date, punti_tot = calcola_risultati()
+    esatte, errate, non_date, punti_tot = calcola_results()
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
@@ -159,7 +159,6 @@ def importa_quesiti():
             st.session_state.indice, st.session_state.risposte_date, st.session_state.start_time = 0, {}, time.time()
     except Exception as e: st.error(f"Errore: {e}")
 
-# --- FIX ERRORE TIMER (CORRETTO IN 'mostra_timer') ---
 @st.fragment(run_every=1)
 def mostra_timer():
     if st.session_state.start_time and st.session_state.get("simulazione", False):
@@ -178,8 +177,8 @@ else:
         tit = "AlPaTest (PROMO)" if st.session_state.is_promo else "AlPaTest"
         st.markdown(f'<div class="logo-style">{tit}</div>', unsafe_allow_html=True)
     with t2: 
-        mostra_timer() # Chiamata corretta
-        if st.button("🚪 Esci", use_container_width=True):
+        mostra_timer()
+        if st.button("🚪 Esci / Cambia Accesso", use_container_width=True):
             for key in list(st.session_state.keys()): del st.session_state[key]
             st.rerun()
 
@@ -206,14 +205,26 @@ else:
                 opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
                 scelta = st.radio("Risposta:", opzioni, key=f"r_{st.session_state.indice}")
                 if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
-                if st.button("🏁 CONSEGNA"): st.session_state.fase = "FINE"; st.rerun()
+                
+                # RIPRISTINO TASTI PRECEDENTE/SUCCESSIVO/CONSEGNA
+                st.write("---")
+                b1, b2, b3 = st.columns(3)
+                if b1.button("⬅️ Precedente", use_container_width=True) and st.session_state.indice > 0:
+                    st.session_state.indice -= 1
+                    st.rerun()
+                if b2.button("Successivo ➡️", use_container_width=True) and st.session_state.indice < len(st.session_state.df_filtrato)-1:
+                    st.session_state.indice += 1
+                    st.rerun()
+                if b3.button("🏁 CONSEGNA", use_container_width=True): 
+                    st.session_state.fase = "FINE"
+                    st.rerun()
             else: st.info("Seleziona gli intervalli a destra.")
         with c_dx:
             st.write("Configurazione")
             num_discipline = len(dict_discipline)
-            for i in range(num_discipline):
-                cod_mat = list(dict_discipline.keys())[i]
-                st.markdown(f"<p class='nome-materia'>{cod_mat}</p>", unsafe_allow_html=True)
+            # RIPRISTINO NOME DISCIPLINE SOPRA I BOX
+            for i, (cod, nome) in enumerate(dict_discipline.items()):
+                st.markdown(f"<p class='nome-materia'>{cod}: {nome}</p>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 c1.text_input("da", key=f"da_{i}", label_visibility="collapsed")
                 c2.text_input("a", key=f"a_{i}", label_visibility="collapsed")
