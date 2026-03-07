@@ -263,7 +263,8 @@ else:
         for i, row in st.session_state.df_filtrato.iterrows():
             tua, corr = st.session_state.risposte_date.get(i, "N.D."), str(row['Corretta']).strip()
             colore = "#00FF00" if tua == corr else "#FF4B4B"
-            st.markdown(f'<div class="report-card"><p style="color:{colore}; font-weight:bold;">Quesito {i+1}</p><p>{row["Domanda"]}</p><p>Tua: {tua} | Corr: {corr}</p></div>', unsafe_allow_html=True)
+            # MODIFICA: Testo domanda forzato a BIANCO PURO e GRASSETTO per massima leggibilità
+            st.markdown(f'<div class="report-card"><p style="color:{colore}; font-weight:bold;">Quesito {i+1}</p><p style="color:white; font-weight:bold;">{row["Domanda"]}</p><p style="color:white; font-weight:bold;">Tua: {tua} | Corr: {corr}</p></div>', unsafe_allow_html=True)
     else:
         c_sx, c_ct, c_dx = st.columns([2.8, 7, 3.2])
         with c_sx:
@@ -334,5 +335,3 @@ else:
             st.write("---")
             st.checkbox("Simulazione (45 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
-
-
