@@ -217,7 +217,7 @@ def importa_quesiti():
 @st.fragment(run_every=1)
 def mostra_timer():
     if st.session_state.start_time and st.session_state.get("simulazione", False):
-        rimanente = max(0, 2700 - (time.time() - st.session_state.start_time))
+        rimanente = max(0, 3600 - (time.time() - st.session_state.start_time))
         st.markdown(f'<p class="timer-style">⏱️ {int(rimanente//60):02d}:{int(rimanente%60):02d}</p>', unsafe_allow_html=True)
 
 # --- VISUALIZZAZIONE ---
@@ -333,5 +333,6 @@ else:
                 c_d.text_input("da", key=f"da_{i}", label_visibility="collapsed", placeholder="Da")
                 c_a.text_input("a", key=f"a_{i}", label_visibility="collapsed", placeholder="A")
             st.write("---")
-            st.checkbox("Simulazione (45 min)", key="simulazione")
+            st.checkbox("Simulazione (60 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
+
