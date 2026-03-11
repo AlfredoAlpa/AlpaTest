@@ -122,6 +122,14 @@ def pulisci_testo(testo):
     for k,v in repls.items(): t = t.replace(k,v)
     return t.encode('latin-1','replace').decode('latin-1')
 
+# --- NUOVA FUNZIONE CHIRURGICA: SALVATAGGIO IMMEDIATO ---
+def salva_risposta_immediata():
+    key_radio = f"rad_{st.session_state.indice}"
+    if key_radio in st.session_state:
+        scelta_attuale = st.session_state[key_radio]
+        if scelta_attuale:
+            st.session_state.risposte_date[st.session_state.indice] = scelta_attuale[0]
+
 def calcola_risultati():
     esatte, errate, non_date = 0, 0, 0
     for i, row in st.session_state.df_filtrato.iterrows():
@@ -263,7 +271,6 @@ else:
         for i, row in st.session_state.df_filtrato.iterrows():
             tua, corr = st.session_state.risposte_date.get(i, "N.D."), str(row['Corretta']).strip()
             colore = "#00FF00" if tua == corr else "#FF4B4B"
-            # MODIFICA: Testo domanda forzato a BIANCO PURO e GRASSETTO per massima leggibilità
             st.markdown(f'<div class="report-card"><p style="color:{colore}; font-weight:bold;">Quesito {i+1}</p><p style="color:white; font-weight:bold;">{row["Domanda"]}</p><p style="color:white; font-weight:bold;">Tua: {tua} | Corr: {corr}</p></div>', unsafe_allow_html=True)
     else:
         c_sx, c_ct, c_dx = st.columns([2.8, 7, 3.2])
@@ -309,8 +316,11 @@ else:
                 st.write("")
                 opzioni = [f"A) {q['opz_A']}", f"B) {q['opz_B']}", f"C) {q['opz_C']}", f"D) {q['opz_D']}"]
                 idx_sel = ["A","B","C","D"].index(st.session_state.risposte_date.get(st.session_state.indice)) if st.session_state.risposte_date.get(st.session_state.indice) else None
-                scelta = st.radio("Scegli la risposta:", opzioni, index=idx_sel, key=f"rad_{st.session_state.indice}")
-                if scelta: st.session_state.risposte_date[st.session_state.indice] = scelta[0]
+                
+                # MODIFICA CHIRURGICA: Aggiunto on_change per aggiornamento immediato della spunta
+                st.radio("Scegli la risposta:", opzioni, index=idx_sel, 
+                         key=f"rad_{st.session_state.indice}", 
+                         on_change=salva_risposta_immediata)
                 
                 st.write("---")
                 b1, b2, b3 = st.columns(3)
@@ -335,4 +345,3 @@ else:
             st.write("---")
             st.checkbox("Simulazione (60 min)", key="simulazione")
             st.button("IMPORTA QUESITI", on_click=importa_quesiti, use_container_width=True, type="primary")
-
